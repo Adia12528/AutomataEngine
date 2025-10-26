@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automata Wizard - Comprehensive Solver</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Link to custom styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="pt-16">
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 z-20 transition duration-300 elegant-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 relative">
+                
+                <!-- Logo/Title -->
+                <div class="flex-shrink-0">
+                    <span class="text-lg md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 tracking-tight" data-i18n="logo.title">
+                        Automata Wizard 🪄
+                    </span>
+                </div>
+                
+                <!-- Right-Side Controls: Menu Toggle + Theme Toggle (Mobile) -->
+                <div class="flex items-center space-x-2">
+                    
+                    <!-- 1. Mobile Home Button (Mobile only - hidden on desktop) -->
+                    <a href="#home" onclick="navigate('home')" class="p-2 rounded-full text-black hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition duration-200 md:hidden inline-flex items-center justify-center" title="Home">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h3m10-11l2 3m-2-3v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </a>
+
+                    <!-- 2. Theme Toggle (Mobile only - hidden on desktop) -->
+                    <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-full text-gray-900 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition duration-200 solver-button md:hidden" title="Toggle Theme">
+                        <!-- Sun Icon (Light Mode) / Moon Icon (Dark Mode) -->
+                        <svg id="sun-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="moon-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+
+                    <!-- 3. Mobile Menu Toggle (Three Dots, HIDDEN on desktop) -->
+                    <button id="mobile-menu-toggle" class="p-2 rounded-full text-black hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition duration-200 md:hidden" title="Menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                    </button>
+                
+                </div>
+
+                <!-- 3. Navigation Content (Visible on desktop, Hidden on mobile) -->
+                <div id="nav-content-wrapper" class="hidden md:flex items-center space-x-4 text-sm md:text-base">
+                    
+                    <!-- Flyout Menu Container (Home Link + Tool Selector) -->
+                    <div class="relative group nav-home-link h-full flex items-center">
+                        <a href="#home" id="nav-home" class="nav-link px-3 py-2 rounded-lg font-extrabold text-lg" onclick="navigate('home')" data-i18n="nav.home">
+                            Home
+                        </a>
+
+                        <!-- THE NEW SCROLLING FLYOUT MENU -->
+                        <div class="flyout-container absolute w-screen -ml-28 sm:-ml-40 md:-ml-64 lg:-ml-96 xl:-ml-[500px]">
+                            <div class="flyout-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 rounded-b-xl border-t border-gray-200 dark:border-gray-700">
+                                <h3 class="text-sm font-extrabold uppercase tracking-widest mb-5 text-center bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent" data-i18n="flyout.title">🎯 Select Your Tool</h3>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 flyout-grid-scroll">
+                                    <a href="#dfa" onclick="navigate('dfa')" class="flyout-link text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition duration-150 transform" style="--hover-color: #3B82F6;">
+                                        <span class="module-icon">🚀</span>
+                                        <span class="font-bold">DFA</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Regular Language</span>
+                                    </a>
+                                    <a href="#nfa" onclick="navigate('nfa')" class="flyout-link text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition duration-150 transform" style="--hover-color: #A78BFA;">
+                                        <span class="module-icon">💡</span>
+                                        <span class="font-bold">NFA</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Non-Deterministic</span>
+                                    </a>
+                                    <a href="#dfamin" onclick="navigate('dfamin')" class="flyout-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition duration-150 transform" style="--hover-color: #22D3EE;">
+                                        <span class="module-icon">⚙️</span>
+                                        <span class="font-bold">DFA Min</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Optimization</span>
+                                    </a>
+                                    <a href="#re" onclick="navigate('re')" class="flyout-link text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition duration-150 transform" style="--hover-color: #FACC15;">
+                                        <span class="module-icon">📝</span>
+                                        <span class="font-bold">RE</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Pattern Matching</span>
+                                    </a>
+                                    <a href="#cfg" onclick="navigate('cfg')" class="flyout-link text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition duration-150 transform" style="--hover-color: #F87171;">
+                                        <span class="module-icon">🌳</span>
+                                        <span class="font-bold">CFG</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Context-Free</span>
+                                    </a>
+                                    <a href="#pda" onclick="navigate('pda')" class="flyout-link text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition duration-150 transform" style="--hover-color: #34D399;">
+                                        <span class="module-icon">💾</span>
+                                        <span class="font-bold">PDA</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Stack Automata</span>
+                                    </a>
+                                    <a href="#lba" onclick="navigate('lba')" class="flyout-link text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition duration-150 transform" style="--hover-color: #6366F1;">
+                                        <span class="module-icon">🔗</span>
+                                        <span class="font-bold">LBA</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Context-Sensitive</span>
+                                    </a>
+                                    <a href="#tm" onclick="navigate('tm')" class="flyout-link text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition duration-150 transform" style="--hover-color: #9CA3AF;">
+                                        <span class="module-icon">🤖</span>
+                                        <span class="font-bold">TM</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Turing Machine</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Controls: Language Selector + Theme Toggle -->
+                    <div class="desktop-nav-controls flex items-center gap-2">
+                        <!-- Language Selector (Desktop only) -->
+                        <div class="lang-selector">
+                            <button id="lang-button" class="px-3 py-2 rounded-full text-sm font-semibold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-lg transition" aria-haspopup="true" aria-expanded="false">
+                                <span id="lang-flag" class="inline-block">🌐</span>
+                                <span id="lang-label" data-i18n="nav.language">Language</span>
+                            </button>
+
+                            <div class="lang-flyout">
+                                <div class="lang-flyout-content">
+                                    <h4 class="text-sm font-bold mb-3 text-gray-700 dark:text-gray-200" data-i18n="flyout.choose">Choose language</h4>
+                                    <div class="lang-list">
+                                        <!-- Language items will be injected here by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Theme Toggle (Desktop - positioned beside language) -->
+                        <button id="theme-toggle-desktop" onclick="toggleTheme()" class="p-2 rounded-full text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition duration-200 solver-button hidden md:inline-flex" title="Toggle Theme">
+                            <!-- Sun Icon (Light Mode) / Moon Icon (Dark Mode) -->
+                            <svg id="sun-icon-desktop" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <svg id="moon-icon-desktop" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NEW: Mobile Menu Drawer (Visible only below md breakpoint) -->
+        <div id="mobile-menu-drawer" class="fixed top-16 left-0 w-full h-auto shadow-xl border-b border-gray-200 dark:border-gray-700 z-40 hidden md:hidden">
+            <div class="p-4 space-y-3 max-h-96 overflow-y-auto">
+                
+                <!-- HOME DROPDOWN -->
+                <div class="mobile-menu-item">
+                    <button id="mobile-home-toggle" onclick="toggleMobileDropdown('home')" class="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition" data-i18n="nav.home">
+                        <span>🏠 Home</span>
+                        <svg class="w-5 h-5 transform transition-transform" id="home-dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </button>
+                    
+                    <!-- Home Tools Grid (Hidden by default) -->
+                    <div id="home-dropdown-content" class="hidden mt-2 grid grid-cols-2 gap-2 px-2">
+                        <a href="#dfa" onclick="navigate('dfa'); closeMobileMenu()" class="flyout-link text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">🚀</span>
+                            <span class="font-bold">DFA</span>
+                        </a>
+                        <a href="#nfa" onclick="navigate('nfa'); closeMobileMenu()" class="flyout-link text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">💡</span>
+                            <span class="font-bold">NFA</span>
+                        </a>
+                        <a href="#dfamin" onclick="navigate('dfamin'); closeMobileMenu()" class="flyout-link text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">⚙️</span>
+                            <span class="font-bold">DFA Min</span>
+                        </a>
+                        <a href="#re" onclick="navigate('re'); closeMobileMenu()" class="flyout-link text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">📝</span>
+                            <span class="font-bold">RE</span>
+                        </a>
+                        <a href="#cfg" onclick="navigate('cfg'); closeMobileMenu()" class="flyout-link text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">🌳</span>
+                            <span class="font-bold">CFG</span>
+                        </a>
+                        <a href="#pda" onclick="navigate('pda'); closeMobileMenu()" class="flyout-link text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">💾</span>
+                            <span class="font-bold">PDA</span>
+                        </a>
+                        <a href="#lba" onclick="navigate('lba'); closeMobileMenu()" class="flyout-link text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">🔗</span>
+                            <span class="font-bold">LBA</span>
+                        </a>
+                        <a href="#tm" onclick="navigate('tm'); closeMobileMenu()" class="flyout-link text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">🤖</span>
+                            <span class="font-bold">TM</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- LANGUAGE DROPDOWN -->
+                <div class="mobile-menu-item">
+                    <button id="mobile-lang-toggle" onclick="toggleMobileDropdown('language')" class="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <span>🌐 <span id="mobile-lang-label" data-i18n="nav.language">Language</span></span>
+                        <svg class="w-5 h-5 transform transition-transform" id="lang-dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </button>
+                    
+                    <!-- Language Options (Hidden by default) -->
+                    <div id="language-dropdown-content" class="hidden mt-2 px-2">
+                        <div id="mobile-lang-list" class="space-y-2">
+                            <!-- Language items will be injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+
+        <!-- Home Page Content -->
+        <div id="home-page" class="page-content space-y-16 py-10 min-h-screen -mx-4 -my-8 md:rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] transition duration-500 dark-mode">
+            <div class="text-center pt-10 px-6">
+                <h1 class="text-6xl sm:text-7xl font-extrabold mb-4 tracking-tighter 
+                           bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+                           animate-gradient-x relative" data-i18n="home.title">
+                    AUTOMATA ENGINE
+                </h1>
+                <p class="text-xl sm:text-2xl text-gray-400 mb-12 max-w-4xl mx-auto font-light" data-i18n="home.subtitle">
+                    Solve, visualize, and generate code for the entire **Chomsky Hierarchy** with AI precision.
+                </p>
+                <a href="#dfa" onclick="navigate('dfa')" class="inline-block px-8 py-3 text-lg rounded-full 
+                       bg-gradient-to-r from-blue-500 to-cyan-400 text-gray-900 start-button
+                       shadow-[0_0_20px_#0EA5E9] hover:shadow-[0_0_40px_#0EA5E9] transition duration-300 transform hover:scale-105 solver-button" data-i18n="cta.start">
+                    Start Computation
+                </a>
+            </div>
+
+            <!-- Module Grid - Futuristic Cards / Elegant Light Cards -->
+            <div class="px-6">
+                <h2 class="text-3xl font-bold text-center text-gray-800 dark:text-gray-200 module-grid-title mb-10 border-b border-gray-300 dark:border-gray-800 pb-3" data-i18n="module.toolbox">Toolbox Modules</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 md:gap-6">
+                    
+                    <a href="#dfa" onclick="navigate('dfa')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #3B82F6;">
+                        <span class="module-icon text-blue-400">🚀</span>
+                        <div class="font-bold text-xl text-blue-200 dark:text-blue-200">DFA</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.dfa.desc">Regular Language</span>
+                    </a>
+                    
+                    <a href="#nfa" onclick="navigate('nfa')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #A78BFA;">
+                        <span class="module-icon text-violet-400">💡</span>
+                        <div class="font-bold text-xl text-violet-200 dark:text-violet-200">NFA</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.nfa.desc">Non-Deterministic</span>
+                    </a>
+
+                    <a href="#dfamin" onclick="navigate('dfamin')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #22D3EE;">
+                        <span class="module-icon text-cyan-400">⚙️</span>
+                        <div class="font-bold text-xl text-cyan-200 dark:text-cyan-200">DFA Min</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.dfamin.desc">Optimization</span>
+                    </a>
+
+                    <a href="#re" onclick="navigate('re')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #FACC15;">
+                        <span class="module-icon text-yellow-400">📝</span>
+                        <div class="font-bold text-xl text-yellow-200 dark:text-yellow-200">RE</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.re.desc">Pattern Matching</span>
+                    </a>
+
+                    <a href="#cfg" onclick="navigate('cfg')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #F87171;">
+                        <span class="module-icon text-red-400">🌳</span>
+                        <div class="font-bold text-xl text-red-200 dark:text-red-200">CFG</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.cfg.desc">Context-Free</span>
+                    </a>
+
+                    <a href="#pda" onclick="navigate('pda')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #34D399;">
+                        <span class="module-icon text-green-400">💾</span>
+                        <div class="font-bold text-xl text-green-200 dark:text-green-200">PDA</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.pda.desc">Stack Automata</span>
+                    </a>
+
+                    <a href="#lba" onclick="navigate('lba')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #6366F1;">
+                        <span class="module-icon text-indigo-400">🔗</span>
+                        <div class="font-bold text-xl text-indigo-200 dark:text-indigo-200">LBA</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.lba.desc">Context-Sensitive</span>
+                    </a>
+                    
+                    <a href="#tm" onclick="navigate('tm')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #9CA3AF;">
+                        <span class="module-icon text-gray-400">🤖</span>
+                        <div class="font-bold text-xl text-gray-200 dark:text-gray-200">TM</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.tm.desc">Turing Completeness</span>
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Theory Overview - Modern Cards -->
+            <div class="px-6 pb-16">
+                <h2 class="text-3xl font-bold text-center text-gray-800 dark:text-gray-200 module-grid-title mb-8 border-b border-gray-300 dark:border-gray-800 pb-3" data-i18n="module.chomsky">Chomsky Hierarchy & Theory</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="theory-card bg-gray-800/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-2xl border border-gray-700 hover:border-blue-500 transition duration-300">
+                        <h3 class="text-xl font-bold text-blue-400 dark:text-blue-400 mb-2" data-i18n="theory.type3.title">Type 3: Regular Languages</h3>
+                        <p class="text-gray-400 dark:text-gray-400 text-sm" data-i18n="theory.type3.desc">Recognized by DFAs and NFAs. These are the simplest, defining patterns like fixed lengths or required substrings. They rely on limited memory (finite states).</p>
+                    </div>
+                    <div class="theory-card bg-gray-800/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-2xl border border-gray-700 hover:border-red-500 transition duration-300">
+                        <h3 class="text-xl font-bold text-red-400 dark:text-red-400 mb-2" data-i18n="theory.type2.title">Type 2: Context-Free Languages</h3>
+                        <p class="text-gray-400 dark:text-gray-400 text-sm" data-i18n="theory.type2.desc">Recognized by PDAs and generated by CFGs. They allow for nested and recursive structures, crucial for parsing programming languages and structured data.</p>
+                     </div>
+                    <div class="theory-card bg-gray-800/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-2xl border border-gray-700 hover:border-indigo-500 transition duration-300">
+                        <h3 class="text-xl font-bold text-indigo-400 dark:text-indigo-400 mb-2" data-i18n="theory.type1.title">Type 1: Context-Sensitive Languages</h3>
+                        <p class="text-gray-400 dark:text-gray-400 text-sm" data-i18n="theory.type1.desc">Recognized by LBAs. The grammar rules depend on the context of symbols, leading to highly structured languages.</p>
+                    </div>
+                    <div class="theory-card bg-gray-800/80 dark:bg-gray-800/80 p-6 rounded-xl shadow-2xl border border-gray-700 hover:border-gray-500 transition duration-300">
+                        <h3 class="text-xl font-bold text-gray-400 dark:text-gray-400 mb-2" data-i18n="theory.type0.title">Type 0: Recursively Enumerable</h3>
+                        <p class="text-gray-400 dark:text-gray-400 text-sm" data-i18n="theory.type0.desc">The most powerful class, recognized by Turing Machines. Can compute anything computable by modern algorithms, including functions and complex decision problems.</p>
+                    </div>
+                    <div class="theory-card bg-gray-800/80 dark:bg-gray-800/80 p-6 rounded-2xl shadow-xl border border-gray-700 hover:border-green-500 transition duration-300 col-span-1 md:col-span-2 lg:col-span-1">
+                        <h3 class="text-xl font-bold text-green-400 dark:text-green-400 mb-2" data-i18n="theory.ai.title">AI-Powered Analysis</h3>
+                        <p class="text-gray-400 dark:text-gray-400 text-sm" data-i18n="theory.ai.desc">Leveraging the Gemini API to instantly solve complex theoretical problems, provide formal definitions, and generate step-by-step computation traces and runnable code.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DFA Solver Page Content -->
+        <div id="dfa-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-8 border-b-4 border-blue-500/50 pb-2 tracking-tight" data-i18n="dfa.title">DFA Solver - Deterministic Finite Automata</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-blue-100 dark:border-blue-900">
+                <label for="dfa-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="dfa.prompt">Design Prompt:</label>
+                <textarea id="dfa-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-blue-400 focus:border-blue-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="dfa.placeholder"
+                    placeholder="e.g., Design a DFA over {0, 1} for all strings containing an odd number of 1s."
+                >Design a DFA over {a, b} for all strings that do not contain the substring 'ab'.</textarea>
+                <button id="solve-dfa-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="dfa.solve">
+                    Solve & Visualize DFA
+                </button>
+            </div>
+
+            <!-- DFA Output and Visualization Area -->
+            <div id="dfa-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="dfa-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-blue-50 dark:bg-blue-950 rounded-2xl shadow-xl border border-blue-200 dark:border-blue-800 loading-pulse">
+                    <div class="spinner bg-blue-600"></div>
+                    <div class="time-indicator-content mt-4 text-blue-700 dark:text-blue-300">
+                        <svg class="text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="dfa-timer-text" data-i18n="dfa.generating">Generating DFA structure...</span>
+                        <span class="time-elapsed text-blue-800 dark:text-blue-500" id="dfa-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="dfa-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="dfa-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+
+                <div id="dfa-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-blue-600">
+                    <h2 class="text-2xl font-extrabold text-blue-700 dark:text-blue-400 mb-4" data-i18n="common.formal">Formal Definition (M)</h2>
+                    <div id="dfa-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-blue-800 dark:text-blue-400 mb-3 flex items-center" data-i18n="common.transition">
+                        Transition Table ($\delta$)
+                    </h3>
+                    <div id="dfa-transition-table" class="transition-table-container"></div>
+                    
+                    <!-- New LLM Features for DFA -->
+                    <div class="mt-6 space-y-3 md:space-y-0 md:space-x-3 flex flex-col md:flex-row">
+                        <button id="generate-dfa-code-button" 
+                            class="px-6 py-2 font-semibold text-white bg-green-600 rounded-xl shadow-md hover:bg-green-700 solver-button flex-1"
+                            onclick="generatePythonCode('dfa')"
+                            data-i18n="common.gencode">
+                            ✨ Generate Python Code
+                        </button>
+                        <button id="generate-dfa-language-button" 
+                            class="px-6 py-2 font-semibold text-white bg-purple-600 rounded-xl shadow-md hover:bg-purple-700 solver-button flex-1"
+                            onclick="generateFormalLanguage('dfa')"
+                            data-i18n="common.genlang">
+                            ✨ Generate Formal Language ($L(M)$)
+                        </button>
+                        <button id="generate-dfa-test-cases-button" 
+                            class="px-6 py-2 font-semibold text-white bg-orange-600 rounded-xl shadow-md hover:bg-orange-700 solver-button flex-1"
+                            onclick="generateTestCases('dfa')"
+                            data-i18n="common.gentest">
+                            ✨ Generate Test Cases
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-green-100 dark:border-green-900">
+                    <h2 class="text-2xl font-bold text-green-600 dark:text-green-400 mb-3" data-i18n="common.flowchart">Flow Chart (State Diagram)</h2>
+                    
+                    <div id="dfa-visualization-container" class="w-full">
+                        <div id="dfa-network">
+                            <p id="dfa-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20" data-i18n="dfa.vizplace">Enter your query above and click "Solve & Visualize DFA" to get started!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dfa-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="dfa-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NFA Solver Page Content -->
+        <div id="nfa-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-violet-700 dark:text-violet-400 mb-8 border-b-4 border-violet-500/50 pb-2 tracking-tight" data-i18n="nfa.title">NFA Solver - Non-deterministic Finite Automata</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-violet-100 dark:border-violet-900">
+                <label for="nfa-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="nfa.prompt">NFA Design Prompt (Supports $\epsilon$-transitions in the prompt):</label>
+                <textarea id="nfa-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-violet-400 focus:border-violet-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="nfa.placeholder"
+                >Design an NFA over {a, b} for the language ending in 'ab'.</textarea>
+                <button id="solve-nfa-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="nfa.solve"
+                >
+                    Solve & Visualize NFA
+                </button>
+            </div>
+
+            <!-- NFA Output and Visualization Area -->
+            <div id="nfa-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="nfa-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-violet-50 dark:bg-violet-950 rounded-2xl shadow-xl border border-violet-200 dark:border-violet-800 loading-pulse">
+                    <div class="spinner bg-violet-600"></div>
+                    <div class="time-indicator-content mt-4 text-violet-700 dark:text-violet-300">
+                        <svg class="text-violet-500 dark:text-violet-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="nfa-timer-text" data-i18n="nfa.generating">Generating NFA structure...</span>
+                        <span class="time-elapsed text-violet-800 dark:text-violet-500" id="nfa-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="nfa-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="nfa-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+
+                <div id="nfa-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-violet-600">
+                    <h2 class="text-2xl font-extrabold text-violet-700 dark:text-violet-400 mb-4" data-i18n="common.formal">Formal Definition (M)</h2>
+                    <div id="nfa-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    <h3 class="text-xl font-bold text-violet-800 dark:text-violet-400 mb-3" data-i18n="common.transition">Transition Table ($\delta$)</h3>
+                    <div id="nfa-transition-table" class="transition-table-container"></div>
+                    
+                    <!-- New LLM Features for NFA -->
+                    <div class="mt-6 space-y-3 md:space-y-0 md:space-x-3 flex flex-col md:flex-row">
+                        <button id="generate-nfa-code-button" 
+                            class="px-6 py-2 font-semibold text-white bg-green-600 rounded-xl shadow-md hover:bg-green-700 solver-button flex-1"
+                            onclick="generatePythonCode('nfa')"
+                            data-i18n="common.gencode"
+                        >
+                            ✨ Generate Python Code
+                        </button>
+                        <button id="generate-nfa-language-button" 
+                            class="px-6 py-2 font-semibold text-white bg-purple-600 rounded-xl shadow-md hover:bg-purple-700 solver-button flex-1"
+                            onclick="generateFormalLanguage('nfa')"
+                            data-i18n="common.genlang"
+                        >
+                            ✨ Generate Formal Language ($L(M)$)
+                        </button>
+                        <button id="generate-nfa-test-cases-button" 
+                            class="px-6 py-2 font-semibold text-white bg-orange-600 rounded-xl shadow-md hover:bg-orange-700 solver-button flex-1"
+                            onclick="generateTestCases('nfa')"
+                            data-i18n="common.gentest"
+                        >
+                            ✨ Generate Test Cases
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-green-100 dark:border-green-900">
+                    <h2 class="text-2xl font-bold text-green-600 dark:text-green-400 mb-3" data-i18n="common.flowchart">Flow Chart (State Diagram)</h2>
+                    
+                    <div id="nfa-visualization-container" class="w-full">
+                        <div id="nfa-network">
+                            <p id="nfa-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20" data-i18n="nfa.vizplace">Enter your query above and click "Solve & Visualize NFA" to get started!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="nfa-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="nfa-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DFA Minimization Page Content -->
+        <div id="dfamin-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-cyan-700 dark:text-cyan-400 mb-8 border-b-4 border-cyan-500/50 pb-2 tracking-tight" data-i18n="dfamin.title">DFA Minimizer - Optimize Finite Automata</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-cyan-100 dark:border-cyan-900">
+                <label for="dfamin-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="dfamin.prompt">DFA Description for Minimization:</label>
+                <textarea id="dfamin-question" rows="5"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-cyan-400 focus:border-cyan-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="dfamin.placeholder"
+                >Minimize the DFA for strings over {a,b} that contain an even number of 'a's, but start with a transition state (q0) that moves to q1 on 'a' and q2 on 'b'. Assume q3 is a sink state.</textarea>
+                <button id="solve-dfamin-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="dfamin.solve"
+                >
+                    Minimize & Visualize DFA
+                </button>
+            </div>
+
+            <!-- DFAMin Output and Visualization Area -->
+            <div id="dfamin-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="dfamin-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-cyan-50 dark:bg-cyan-950 rounded-2xl shadow-xl border border-cyan-200 dark:border-cyan-800 loading-pulse">
+                    <div class="spinner bg-cyan-600"></div>
+                    <div class="time-indicator-content mt-4 text-cyan-700 dark:text-cyan-300">
+                        <svg class="text-cyan-500 dark:text-cyan-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="dfamin-timer-text" data-i18n="dfamin.generating">Generating Minimized DFA...</span>
+                        <span class="time-elapsed text-cyan-800 dark:text-cyan-500" id="dfamin-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="dfamin-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="dfamin-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+
+                <div id="dfamin-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-cyan-600">
+                    <h2 class="text-2xl font-extrabold text-cyan-700 dark:text-cyan-400 mb-4" data-i18n="dfamin.formal">Minimized Formal Definition (M')</h2>
+                    <div id="dfamin-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-cyan-800 dark:text-cyan-400 mb-3 flex items-center" data-i18n="dfamin.transition">
+                        Transition Table ($\delta'$)
+                    </h3>
+                    <div id="dfamin-transition-table" class="transition-table-container"></div>
+                    
+                    <!-- New LLM Features for DFA Minimization -->
+                    <div class="mt-6 space-y-3 md:space-y-0 md:space-x-3 flex flex-col md:flex-row">
+                        <button id="generate-dfamin-code-button" 
+                            class="px-6 py-2 font-semibold text-white bg-green-600 rounded-xl shadow-md hover:bg-green-700 solver-button flex-1"
+                            onclick="generatePythonCode('dfamin')"
+                            data-i18n="common.gencode"
+                        >
+                            ✨ Generate Python Code
+                        </button>
+                        <button id="generate-dfamin-language-button" 
+                            class="px-6 py-2 font-semibold text-white bg-purple-600 rounded-xl shadow-md hover:bg-purple-700 solver-button flex-1"
+                            onclick="generateFormalLanguage('dfamin')"
+                            data-i18n="common.genlang"
+                        >
+                            ✨ Generate Formal Language ($L(M')$)
+                        </button>
+                        <button id="generate-dfamin-test-cases-button" 
+                            class="px-6 py-2 font-semibold text-white bg-orange-600 rounded-xl shadow-md hover:bg-orange-700 solver-button flex-1"
+                            onclick="generateTestCases('dfamin')"
+                            data-i18n="common.gentest"
+                        >
+                            ✨ Generate Test Cases
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-green-100 dark:border-green-900">
+                    <h2 class="text-2xl font-bold text-green-600 dark:text-green-400 mb-3" data-i18n="dfamin.flowchart">Minimized Flow Chart (State Diagram)</h2>
+                    
+                    <div id="dfamin-visualization-container" class="w-full">
+                        <div id="dfamin-network">
+                            <p id="dfamin-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20">Enter a DFA description above and click "Minimize & Visualize DFA" to see the optimized result!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dfamin-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300">Error:</p>
+                    <p id="dfamin-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regular Expression Solver Page Content -->
+        <div id="re-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-yellow-700 dark:text-yellow-400 mb-8 border-b-4 border-yellow-500/50 pb-2 tracking-tight" data-i18n="re.title">Regular Expression Solver - Regex Generator</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-yellow-100 dark:border-yellow-900">
+                <label for="re-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="re.prompt">Language Description Prompt:</label>
+                <textarea id="re-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-yellow-400 focus:border-yellow-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="re.placeholder"
+                >Generate an RE for the set of all strings that contain an odd number of 'a's.</textarea>
+                <button id="solve-re-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="re.solve"
+                >
+                    Generate Regular Expression
+                </button>
+            </div>
+            <div id="re-results-container" class="space-y-8">
+
+                <!-- Loading Indicator -->
+                <div id="re-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-yellow-50 dark:bg-yellow-950 rounded-2xl shadow-xl border border-yellow-200 dark:border-yellow-800 loading-pulse">
+                    <div class="spinner bg-yellow-600"></div>
+                    <div class="time-indicator-content mt-4 text-yellow-700 dark:text-yellow-300">
+                        <svg class="text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="re-timer-text" data-i18n="re.generating">Generating Regular Expression...</span>
+                        <span class="time-elapsed text-yellow-800 dark:text-yellow-500" id="re-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="re-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="re-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+                
+                <div id="re-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-yellow-600">
+                    <h2 class="text-2xl font-extrabold text-yellow-700 dark:text-yellow-400 mb-4" data-i18n="re.result">Resulting Regular Expression ($\mathbf{r}$)</h2>
+                    <div id="re-formal-definition" class="text-4xl font-mono text-gray-800 dark:text-gray-200 mb-4 p-4 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 overflow-x-auto text-content"></div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-yellow-100 dark:border-yellow-900">
+                    <h2 class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-3" data-i18n="re.vistree">Visual Syntax Tree (Generated Structure)</h2>
+                    <div class="visualization-placeholder-box flex-col">
+                        <p id="re-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 p-8" data-i18n="re.vizplace">Visualization will appear here (formatted text structure).</p>
+                        <div id="re-network" class="trace-output w-full h-full text-left hidden"></div>
+                    </div>
+                </div>
+
+                <div id="re-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="re-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context-Free Grammar Solver Page Content -->
+        <div id="cfg-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-red-700 dark:text-red-400 mb-8 border-b-4 border-red-500/50 pb-2 tracking-tight" data-i18n="cfg.title">Context-Free Grammar Solver - CFG Generator</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-red-100 dark:border-red-900">
+                <label for="cfg-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="cfg.prompt">Language Description Prompt:</label>
+                <textarea id="cfg-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-red-400 focus:border-red-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="cfg.placeholder"
+                >Generate a CFG for all strings of 'a's and 'b's with an unequal number of 'a's and 'b's.</textarea>
+                <button id="solve-cfg-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="cfg.solve"
+                >
+                    Generate CFG
+                </button>
+            </div>
+            <div id="cfg-results-container" class="space-y-8">
+
+                <!-- Loading Indicator -->
+                <div id="cfg-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-red-50 dark:bg-red-950 rounded-2xl shadow-xl border border-red-200 dark:border-red-800 loading-pulse">
+                    <div class="spinner bg-red-600"></div>
+                    <div class="time-indicator-content mt-4 text-red-700 dark:text-red-300">
+                        <svg class="text-red-500 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="cfg-timer-text" data-i18n="cfg.generating">Generating CFG...</span>
+                        <span class="time-elapsed text-red-800 dark:text-red-500" id="cfg-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="cfg-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="cfg-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+                
+                <div id="cfg-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-red-600">
+                    <h2 class="text-2xl font-extrabold text-red-800 dark:text-red-400 mb-4" data-i18n="cfg.formal">Formal Definition (G)</h2>
+                    <div id="cfg-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-red-800 dark:text-red-400 mb-3" data-i18n="cfg.production">Production Rules ($\mathbf{P}$)</h3>
+                    <div id="cfg-transition-table" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-300 dark:border-gray-700 text-lg font-mono whitespace-pre-wrap overflow-x-auto text-gray-800 dark:text-gray-200"></div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-red-100 dark:border-red-900">
+                    <h2 class="text-2xl font-bold text-red-700 dark:text-red-400 mb-3" data-i18n="cfg.vistree">Visual Syntax Tree (Sample Derivation)</h2>
+                    <div class="visualization-placeholder-box flex-col">
+                        <p id="cfg-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 p-8" data-i18n="cfg.vizplace">Visualization will appear here (formatted text structure).</p>
+                        <div id="cfg-network" class="trace-output w-full h-full text-left hidden"></div>
+                    </div>
+                </div>
+
+                <div id="cfg-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="cfg-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pushdown Automata Solver Page Content -->
+        <div id="pda-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-green-700 dark:text-green-400 mb-8 border-b-4 border-green-500/50 pb-2 tracking-tight" data-i18n="pda.title">PDA Designer - Pushdown Automata</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-green-100 dark:border-green-900">
+                <label for="pda-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="pda.prompt">PDA Design Prompt:</label>
+                <textarea id="pda-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-green-400 focus:border-green-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="pda.placeholder"
+                >Design a PDA for strings with an equal number of '0's and '1's.</textarea>
+                
+                <label for="pda-test-string" class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2" data-i18n="pda.testlabel">Test String for Trace:</label>
+                <input type="text" id="pda-test-string" value="0011"
+                    class="w-full p-3 border border-gray-200 rounded-xl focus:ring-green-400 focus:border-green-400 transition duration-200 shadow-inner dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="pda.testplaceholder"
+                >
+                
+                <button id="solve-pda-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="pda.solve"
+                >
+                    Solve & Display PDA
+                </button>
+            </div>
+            <div id="pda-results-container" class="space-y-8">
+
+                <!-- Loading Indicator -->
+                <div id="pda-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-green-50 dark:bg-green-950 rounded-2xl shadow-xl border border-green-200 dark:border-green-800 loading-pulse">
+                    <div class="spinner bg-green-600"></div>
+                    <div class="time-indicator-content mt-4 text-green-700 dark:text-green-300">
+                        <svg class="text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="pda-timer-text" data-i18n="pda.generating">Generating PDA structure...</span>
+                        <span class="time-elapsed text-green-800 dark:text-green-500" id="pda-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="pda-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="pda-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+                
+                <div id="pda-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-green-600">
+                    <h2 class="text-2xl font-extrabold text-green-800 dark:text-green-400 mb-4" data-i18n="pda.formal">Formal Definition (M)</h2>
+                    <div id="pda-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-green-800 dark:text-green-400 mb-3" data-i18n="pda.transition">Transitions (($q_i, a, Z) \to (q_j, \gamma)$)</h3>
+                    <div id="pda-transition-table" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-300 dark:border-gray-700 text-lg font-mono whitespace-pre-wrap overflow-x-auto text-gray-800 dark:text-gray-200"></div>
+                </div>
+                
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-green-100 dark:border-green-900">
+                    <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-3" data-i18n="pda.trace">Sample Computation Trace (Stack/State)</h2>
+                    <div class="visualization-placeholder-box flex-col">
+                        <p id="pda-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 p-8" data-i18n="pda.vizplace">Enter a test string and click "Solve & Display PDA" to generate the step-by-step trace.</p>
+                        <div id="pda-network" class="trace-output w-full h-full text-left hidden"></div>
+                    </div>
+                </div>
+                <div id="pda-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="pda-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linear-Bounded Automata Page Content (NEW) -->
+        <div id="lba-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-indigo-700 dark:text-indigo-400 mb-8 border-b-4 border-indigo-500/50 pb-2 tracking-tight" data-i18n="lba.title">LBA Designer - Linear Bounded Automata (Context-Sensitive)</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-indigo-100 dark:border-indigo-900">
+                <label for="lba-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="lba.prompt">Context-Sensitive Grammar (CSG) or LBA Prompt:</label>
+                <textarea id="lba-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-indigo-400 focus:border-indigo-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="lba.placeholder"
+                >Generate a Context-Sensitive Grammar (CSG) for the language L = {a^n b^n c^n | n >= 1}.</textarea>
+                
+                <label for="lba-test-string" class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2" data-i18n="lba.testlabel">Test String for Trace:</label>
+                <input type="text" id="lba-test-string" value="aabbcc"
+                    class="w-full p-3 border border-gray-200 rounded-xl focus:ring-indigo-400 focus:border-indigo-400 transition duration-200 shadow-inner dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="lba.testplaceholder"
+                >
+
+                <button id="solve-lba-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="lba.solve"
+                >
+                    Generate LBA/CSG Solution
+                </button>
+            </div>
+            <div id="lba-results-container" class="space-y-8">
+
+                <!-- Loading Indicator -->
+                <div id="lba-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-indigo-50 dark:bg-indigo-950 rounded-2xl shadow-xl border border-indigo-200 dark:border-indigo-800 loading-pulse">
+                    <div class="spinner bg-indigo-600"></div>
+                    <div class="time-indicator-content mt-4 text-indigo-700 dark:text-indigo-300">
+                        <svg class="text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="lba-timer-text" data-i18n="lba.generating">Generating LBA/CSG structure...</span>
+                        <span class="time-elapsed text-indigo-800 dark:text-indigo-500" id="lba-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="lba-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="lba-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+                
+                <div id="lba-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-indigo-600">
+                    <h2 class="text-2xl font-extrabold text-indigo-800 dark:text-indigo-400 mb-4" data-i18n="lba.formal">Formal Definition (G)</h2>
+                    <div id="lba-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-indigo-800 dark:text-indigo-400 mb-3" data-i18n="lba.production">Context-Sensitive Production Rules ($\mathbf{P}$)</h3>
+                    <div id="lba-transition-table" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-300 dark:border-gray-700 text-lg font-mono whitespace-pre-wrap overflow-x-auto text-gray-800 dark:text-gray-200"></div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-indigo-100 dark:border-indigo-900">
+                    <h2 class="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-3" data-i18n="lba.vistree">Visual Syntax Tree (Sample Derivation)</h2>
+                    <div class="visualization-placeholder-box flex-col">
+                        <p id="lba-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 p-8" data-i18n="lba.vizplace">Visualization will appear here (formatted text structure).</p>
+                        <div id="lba-network" class="trace-output w-full h-full text-left hidden"></div>
+                    </div>
+                </div>
+                
+                <div id="lba-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="lba-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Turing Machine Solver Page Content -->
+        <div id="tm-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-gray-700 dark:text-gray-400 mb-8 border-b-4 border-gray-500/50 pb-2 tracking-tight" data-i18n="tm.title">TM Simulator - Turing Machine</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-gray-100 dark:border-gray-900">
+                <label for="tm-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3" data-i18n="tm.prompt">Turing Machine Design Prompt:</label>
+                <textarea id="tm-question" rows="3"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-gray-400 focus:border-gray-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="tm.placeholder"
+                >Design a TM that computes the function f(n) = n + 1 (binary representation).</textarea>
+                
+                <label for="tm-test-string" class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2" data-i18n="tm.testlabel">Input for Tape Trace (e.g., input string):</label>
+                <input type="text" id="tm-test-string" value="101"
+                    class="w-full p-3 border border-gray-200 rounded-xl focus:ring-gray-400 focus:border-gray-400 transition duration-200 shadow-inner dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    data-i18n-placeholder="tm.testplaceholder"
+                >
+
+                <button id="solve-tm-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100"
+                    data-i18n="tm.solve"
+                >
+                    Solve & Simulate TM
+                </button>
+            </div>
+            <div id="tm-results-container" class="space-y-8">
+
+                <!-- Loading Indicator -->
+                <div id="tm-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-gray-100 dark:bg-gray-950 rounded-2xl shadow-xl border border-gray-300 dark:border-gray-800 loading-pulse">
+                    <div class="spinner bg-gray-600"></div>
+                    <div class="time-indicator-content mt-4 text-gray-700 dark:text-gray-300">
+                        <svg class="text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="tm-timer-text" data-i18n="tm.generating">Generating TM structure...</span>
+                        <span class="time-elapsed text-gray-800 dark:text-gray-500" id="tm-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="tm-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1" data-i18n="common.refined">Refined Query:</p>
+                    <p id="tm-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+                
+                <div id="tm-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-gray-600">
+                    <h2 class="text-2xl font-extrabold text-gray-800 dark:text-gray-400 mb-4" data-i18n="tm.formal">Formal Definition (M)</h2>
+                    <div id="tm-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-400 mb-3" data-i18n="tm.transition">Transitions (($q_i, x) \to (q_j, y, D)$)</h3>
+                    <div id="tm-transition-table" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-300 dark:border-gray-700 text-lg font-mono whitespace-pre-wrap overflow-x-auto text-gray-800 dark:text-gray-200"></div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-gray-100 dark:border-gray-900">
+                    <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-400 mb-3" data-i18n="tm.trace">Sample Tape Trace (Step-by-Step Simulation)</h2>
+                    <div class="visualization-placeholder-box flex-col">
+                        <p id="tm-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20" data-i18n="tm.vizplace">Enter a test string and click "Solve & Simulate TM" to generate the tape trace.</p>
+                        <div id="tm-network" class="trace-output w-full h-full text-left hidden"></div>
+                    </div>
+                </div>
+                <div id="tm-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
+                    <p id="tm-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    </div>
+    <!-- Link to external JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
