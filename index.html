@@ -6,6 +6,17 @@
     <title>Automata Wizard - Comprehensive Solver</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { curve: 'basis' }
+        });
+        window.mermaid = mermaid;
+    </script>
     <!-- Link to custom styles -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -99,6 +110,21 @@
                                         <span class="font-bold">TM</span>
                                         <span class="text-xs text-gray-500 dark:text-gray-400">Turing Machine</span>
                                     </a>
+                                    <a href="#nfatodfa" onclick="navigate('nfatodfa')" class="flyout-link text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition duration-150 transform" style="--hover-color: #A855F7;">
+                                        <span class="module-icon">🔄</span>
+                                        <span class="font-bold">NFA→DFA</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Conversion</span>
+                                    </a>
+                                    <a href="#moore" onclick="navigate('moore')" class="flyout-link text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition duration-150 transform" style="--hover-color: #14B8A6;">
+                                        <span class="module-icon">⚡</span>
+                                        <span class="font-bold">Moore</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Output Machine</span>
+                                    </a>
+                                    <a href="#mealy" onclick="navigate('mealy')" class="flyout-link text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition duration-150 transform" style="--hover-color: #F97316;">
+                                        <span class="module-icon">⚙️</span>
+                                        <span class="font-bold">Mealy</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Output Machine</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -178,6 +204,18 @@
                         <a href="#tm" onclick="navigate('tm'); closeMobileMenu()" class="flyout-link text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition p-2 rounded-lg text-center text-sm">
                             <span class="module-icon block">🤖</span>
                             <span class="font-bold">TM</span>
+                        </a>
+                        <a href="#nfatodfa" onclick="navigate('nfatodfa'); closeMobileMenu()" class="flyout-link text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">🔄</span>
+                            <span class="font-bold">NFA→DFA</span>
+                        </a>
+                        <a href="#moore" onclick="navigate('moore'); closeMobileMenu()" class="flyout-link text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">⚡</span>
+                            <span class="font-bold">Moore</span>
+                        </a>
+                        <a href="#mealy" onclick="navigate('mealy'); closeMobileMenu()" class="flyout-link text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition p-2 rounded-lg text-center text-sm">
+                            <span class="module-icon block">⚙️</span>
+                            <span class="font-bold">Mealy</span>
                         </a>
                     </div>
                 </div>
@@ -273,6 +311,24 @@
                         <span class="module-icon text-gray-400">🤖</span>
                         <div class="font-bold text-xl text-gray-200 dark:text-gray-200">TM</div>
                         <span class="text-xs text-gray-400 mt-1" data-i18n="module.tm.desc">Turing Completeness</span>
+                    </a>
+
+                    <a href="#nfatodfa" onclick="navigate('nfatodfa')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #A855F7;">
+                        <span class="module-icon text-purple-400">🔄</span>
+                        <div class="font-bold text-xl text-purple-200 dark:text-purple-200">NFA→DFA</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.nfatodfa.desc">Subset Construction</span>
+                    </a>
+
+                    <a href="#moore" onclick="navigate('moore')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #14B8A6;">
+                        <span class="module-icon text-teal-400">⚡</span>
+                        <div class="font-bold text-xl text-teal-200 dark:text-teal-200">Moore</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.moore.desc">State-Based Output</span>
+                    </a>
+
+                    <a href="#mealy" onclick="navigate('mealy')" class="futuristic-module module-card-link p-4 text-center cursor-pointer" style="--hover-color: #F97316;">
+                        <span class="module-icon text-orange-400">⚙️</span>
+                        <div class="font-bold text-xl text-orange-200 dark:text-orange-200">Mealy</div>
+                        <span class="text-xs text-gray-400 mt-1" data-i18n="module.mealy.desc">Transition-Based Output</span>
                     </a>
 
                 </div>
@@ -871,6 +927,238 @@
                 <div id="tm-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
                     <p class="font-bold text-red-800 dark:text-red-300" data-i18n="common.error">Error:</p>
                     <p id="tm-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NFA to DFA Conversion Page Content -->
+        <div id="nfatodfa-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-purple-700 dark:text-purple-400 mb-8 border-b-4 border-purple-500/50 pb-2 tracking-tight">NFA to DFA Converter</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-purple-100 dark:border-purple-900">
+                <label for="nfatodfa-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">NFA Definition (Describe the NFA to convert):</label>
+                <textarea id="nfatodfa-question" rows="4"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-purple-400 focus:border-purple-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    placeholder="e.g., Design an NFA over {0,1} that accepts strings ending in '01', then convert it to a DFA using subset construction."
+                >Design an NFA over {a,b} that accepts strings containing 'ab' and convert it to a DFA.</textarea>
+                <button id="solve-nfatodfa-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100">
+                    Convert NFA to DFA
+                </button>
+            </div>
+
+            <!-- NFA to DFA Results Container -->
+            <div id="nfatodfa-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="nfatodfa-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-purple-50 dark:bg-purple-950 rounded-2xl shadow-xl border border-purple-200 dark:border-purple-800 loading-pulse">
+                    <div class="spinner bg-purple-600"></div>
+                    <div class="time-indicator-content mt-4 text-purple-700 dark:text-purple-300">
+                        <svg class="text-purple-500 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="nfatodfa-timer-text">Performing subset construction...</span>
+                        <span class="time-elapsed text-purple-800 dark:text-purple-500" id="nfatodfa-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="nfatodfa-prompt-feedback" class="hidden bg-indigo-50 dark:bg-indigo-900 border-l-4 border-indigo-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-indigo-800 dark:text-indigo-300 mb-1">Refined Query:</p>
+                    <p id="nfatodfa-corrected-prompt" class="text-indigo-700 dark:text-indigo-200 italic text-base"></p>
+                </div>
+
+                <!-- Original NFA -->
+                <div id="nfatodfa-original-nfa-card" class="hidden shadow-2xl formal-definition-box bg-card border-purple-600">
+                    <h2 class="text-2xl font-extrabold text-purple-700 dark:text-purple-400 mb-4">Original NFA</h2>
+                    <div id="nfatodfa-original-nfa" class="text-content text-gray-700 dark:text-gray-300 mb-6"></div>
+                    
+                    <h3 class="text-xl font-bold text-purple-800 dark:text-purple-400 mb-3">NFA Transition Table</h3>
+                    <div id="nfatodfa-nfa-table" class="transition-table-container"></div>
+                </div>
+
+                <!-- Converted DFA -->
+                <div id="nfatodfa-converted-dfa-card" class="hidden shadow-2xl formal-definition-box bg-card border-blue-600">
+                    <h2 class="text-2xl font-extrabold text-blue-700 dark:text-blue-400 mb-4">Converted DFA (via Subset Construction)</h2>
+                    <div id="nfatodfa-converted-dfa" class="text-content text-gray-700 dark:text-gray-300 mb-6"></div>
+                    
+                    <h3 class="text-xl font-bold text-blue-800 dark:text-blue-400 mb-3">DFA Transition Table</h3>
+                    <div id="nfatodfa-dfa-table" class="transition-table-container"></div>
+
+                    <!-- Conversion Steps -->
+                    <div class="mt-6 p-4 bg-green-50 dark:bg-green-900 rounded-xl border-l-4 border-green-500">
+                        <h4 class="text-lg font-bold text-green-800 dark:text-green-300 mb-2">Subset Construction Steps</h4>
+                        <div id="nfatodfa-steps" class="text-green-700 dark:text-green-200 text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Visualizations -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-card p-6 rounded-2xl shadow-xl border-purple-100 dark:border-purple-900">
+                        <h2 class="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">Original NFA Diagram</h2>
+                        <div id="nfatodfa-nfa-viz" class="w-full min-h-[300px] flex items-center justify-center">
+                            <p class="text-center text-gray-500 dark:text-gray-400">NFA visualization will appear here</p>
+                        </div>
+                    </div>
+                    <div class="bg-card p-6 rounded-2xl shadow-xl border-blue-100 dark:border-blue-900">
+                        <h2 class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-3">Converted DFA Diagram</h2>
+                        <div id="nfatodfa-dfa-viz" class="w-full min-h-[300px] flex items-center justify-center">
+                            <p class="text-center text-gray-500 dark:text-gray-400">DFA visualization will appear here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="nfatodfa-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300">Error:</p>
+                    <p id="nfatodfa-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moore Machine Page Content -->
+        <div id="moore-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-teal-700 dark:text-teal-400 mb-8 border-b-4 border-teal-500/50 pb-2 tracking-tight">Moore Machine Designer</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-teal-100 dark:border-teal-900">
+                <label for="moore-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Moore Machine Design Prompt:</label>
+                <textarea id="moore-question" rows="4"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-teal-400 focus:border-teal-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    placeholder="e.g., Design a Moore machine over {0,1} that outputs 1 when the number of 1s seen so far is even, 0 otherwise."
+                >Design a Moore machine over {a,b} that outputs 'X' when in a state that has seen an even number of a's, and 'Y' otherwise.</textarea>
+                <button id="solve-moore-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100">
+                    Design Moore Machine
+                </button>
+            </div>
+
+            <!-- Moore Machine Results Container -->
+            <div id="moore-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="moore-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-teal-50 dark:bg-teal-950 rounded-2xl shadow-xl border border-teal-200 dark:border-teal-800 loading-pulse">
+                    <div class="spinner bg-teal-600"></div>
+                    <div class="time-indicator-content mt-4 text-teal-700 dark:text-teal-300">
+                        <svg class="text-teal-500 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="moore-timer-text">Generating Moore machine...</span>
+                        <span class="time-elapsed text-teal-800 dark:text-teal-500" id="moore-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="moore-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1">Refined Query:</p>
+                    <p id="moore-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+
+                <div id="moore-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-teal-600">
+                    <h2 class="text-2xl font-extrabold text-teal-700 dark:text-teal-400 mb-4">Formal Definition (Moore Machine)</h2>
+                    <div id="moore-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-teal-800 dark:text-teal-400 mb-3">State Transition & Output Table</h3>
+                    <div id="moore-transition-table" class="transition-table-container"></div>
+
+                    <!-- Test String -->
+                    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl">
+                        <h4 class="text-lg font-bold text-blue-800 dark:text-blue-300 mb-3">Test Moore Machine</h4>
+                        <label class="block text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">Input String:</label>
+                        <input type="text" id="moore-test-string" value="aabba"
+                            class="w-full p-3 border border-blue-200 rounded-xl focus:ring-teal-400 focus:border-teal-400 dark:bg-gray-900 dark:border-gray-700 dark:text-white mb-3">
+                        <button onclick="testMooreString()" 
+                            class="px-6 py-2 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 solver-button">
+                            Run Test
+                        </button>
+                        <div id="moore-test-output" class="mt-4 p-3 bg-white dark:bg-gray-800 rounded-xl border border-teal-200 dark:border-teal-700 hidden">
+                            <p class="font-semibold text-teal-700 dark:text-teal-400 mb-2">Output Sequence:</p>
+                            <p id="moore-test-result" class="font-mono text-gray-800 dark:text-gray-200"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-teal-100 dark:border-teal-900">
+                    <h2 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mb-3">State Diagram</h2>
+                    <div id="moore-visualization-container" class="w-full">
+                        <div id="moore-network" class="min-h-[400px] flex items-center justify-center">
+                            <p id="moore-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20">Enter your query above and click "Design Moore Machine" to get started!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="moore-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300">Error:</p>
+                    <p id="moore-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mealy Machine Page Content -->
+        <div id="mealy-page" class="page-content hidden space-y-6 py-4">
+            <h1 class="text-4xl font-bold text-orange-700 dark:text-orange-400 mb-8 border-b-4 border-orange-500/50 pb-2 tracking-tight">Mealy Machine Designer</h1>
+            <div class="mb-8 bg-card p-8 rounded-2xl shadow-2xl border-orange-100 dark:border-orange-900">
+                <label for="mealy-question" class="block text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Mealy Machine Design Prompt:</label>
+                <textarea id="mealy-question" rows="4"
+                    class="w-full p-4 border border-gray-200 rounded-xl focus:ring-orange-400 focus:border-orange-400 transition duration-200 shadow-inner resize-y dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                    placeholder="e.g., Design a Mealy machine over {0,1} that outputs 1 on transitions when the input is 1, and 0 otherwise."
+                >Design a Mealy machine over {a,b} that outputs 'X' on transitions with input 'a' and 'Y' on transitions with input 'b'.</textarea>
+                <button id="solve-mealy-button" 
+                    class="mt-6 w-full md:w-auto px-10 py-3 font-extrabold rounded-xl shadow-xl text-white solver-button 
+                           bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 
+                           flex items-center justify-center disabled:opacity-50 disabled:scale-100">
+                    Design Mealy Machine
+                </button>
+            </div>
+
+            <!-- Mealy Machine Results Container -->
+            <div id="mealy-results-container" class="space-y-8">
+                
+                <!-- Loading Indicator -->
+                <div id="mealy-loading-indicator" class="hidden flex flex-col justify-center items-center py-12 bg-orange-50 dark:bg-orange-950 rounded-2xl shadow-xl border border-orange-200 dark:border-orange-800 loading-pulse">
+                    <div class="spinner bg-orange-600"></div>
+                    <div class="time-indicator-content mt-4 text-orange-700 dark:text-orange-300">
+                        <svg class="text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        <span id="mealy-timer-text">Generating Mealy machine...</span>
+                        <span class="time-elapsed text-orange-800 dark:text-orange-500" id="mealy-time-elapsed">0.00s</span>
+                    </div>
+                </div>
+
+                <div id="mealy-prompt-feedback" class="hidden bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-400 p-4 rounded-xl shadow-md transition duration-300">
+                    <p class="font-bold text-purple-800 dark:text-purple-300 mb-1">Refined Query:</p>
+                    <p id="mealy-corrected-prompt" class="text-purple-700 dark:text-purple-200 italic text-base"></p>
+                </div>
+
+                <div id="mealy-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-orange-600">
+                    <h2 class="text-2xl font-extrabold text-orange-700 dark:text-orange-400 mb-4">Formal Definition (Mealy Machine)</h2>
+                    <div id="mealy-formal-definition" class="text-content text-gray-700 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4"></div>
+                    
+                    <h3 class="text-xl font-bold text-orange-800 dark:text-orange-400 mb-3">State Transition & Output Table</h3>
+                    <div id="mealy-transition-table" class="transition-table-container"></div>
+
+                    <!-- Test String -->
+                    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl">
+                        <h4 class="text-lg font-bold text-blue-800 dark:text-blue-300 mb-3">Test Mealy Machine</h4>
+                        <label class="block text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">Input String:</label>
+                        <input type="text" id="mealy-test-string" value="aabba"
+                            class="w-full p-3 border border-blue-200 rounded-xl focus:ring-orange-400 focus:border-orange-400 dark:bg-gray-900 dark:border-gray-700 dark:text-white mb-3">
+                        <button onclick="testMealyString()" 
+                            class="px-6 py-2 bg-orange-600 text-white font-semibold rounded-xl hover:bg-orange-700 solver-button">
+                            Run Test
+                        </button>
+                        <div id="mealy-test-output" class="mt-4 p-3 bg-white dark:bg-gray-800 rounded-xl border border-orange-200 dark:border-orange-700 hidden">
+                            <p class="font-semibold text-orange-700 dark:text-orange-400 mb-2">Output Sequence:</p>
+                            <p id="mealy-test-result" class="font-mono text-gray-800 dark:text-gray-200"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-2xl shadow-xl border-orange-100 dark:border-orange-900">
+                    <h2 class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-3">State Diagram</h2>
+                    <div id="mealy-visualization-container" class="w-full">
+                        <div id="mealy-network" class="min-h-[400px] flex items-center justify-center">
+                            <p id="mealy-visualization-placeholder" class="text-center text-gray-500 dark:text-gray-400 py-20">Enter your query above and click "Design Mealy Machine" to get started!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mealy-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
+                    <p class="font-bold text-red-800 dark:text-red-300">Error:</p>
+                    <p id="mealy-error-text" class="text-red-700 dark:text-red-200"></p>
                 </div>
             </div>
         </div>
