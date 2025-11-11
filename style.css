@@ -2129,3 +2129,810 @@ body.dark .modal-content::-webkit-scrollbar-thumb {
 #home-page:not(.dark-mode) .module-card-link .font-bold {
     color: #111827; /* Ensure link titles are dark in light mode */
 }
+
+/* ========================================
+   📱 COMPREHENSIVE RESPONSIVE OPTIMIZATIONS
+   Mobile-First Design for All Devices
+   ======================================== */
+
+/* === EXTRA SMALL DEVICES (Phones, < 480px) === */
+@media (max-width: 479px) {
+    /* Typography scaling */
+    body {
+        font-size: 14px;
+    }
+    
+    /* Logo/Title */
+    nav .text-lg {
+        font-size: 1.125rem !important;
+    }
+    
+    /* Home page hero text */
+    #home-page h1 {
+        font-size: 1.875rem !important;
+        line-height: 2.25rem !important;
+        padding: 0 0.5rem;
+    }
+    
+    #home-page h2 {
+        font-size: 1.25rem !important;
+        line-height: 1.75rem !important;
+    }
+    
+    #home-page p {
+        font-size: 0.875rem !important;
+        line-height: 1.5rem !important;
+    }
+    
+    /* Start button */
+    .start-button {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 0.875rem !important;
+    }
+    
+    /* Module cards on home */
+    .module-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+    }
+    
+    .module-card-link {
+        padding: 1rem !important;
+    }
+    
+    .module-icon {
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Flyout grid */
+    .flyout-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+    
+    .flyout-link {
+        padding: 0.75rem 0.375rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .flyout-link .module-icon {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Input fields and textareas */
+    input[type="text"], textarea {
+        font-size: 14px !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Buttons */
+    button, .solver-button {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.875rem !important;
+    }
+    
+    /* Cards and containers */
+    .bg-card, .elegant-card {
+        padding: 1rem !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Visualization containers */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 250px !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Tables */
+    table {
+        font-size: 0.75rem !important;
+    }
+    
+    th, td {
+        padding: 0.5rem 0.25rem !important;
+    }
+    
+    /* Navigation */
+    nav {
+        padding: 0 0.5rem !important;
+    }
+    
+    .max-w-7xl {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+
+/* === SMALL DEVICES (Phones, 480px - 640px) === */
+@media (min-width: 480px) and (max-width: 640px) {
+    /* Typography */
+    body {
+        font-size: 15px;
+    }
+    
+    /* Logo */
+    nav .text-lg {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Home page */
+    #home-page h1 {
+        font-size: 2.25rem !important;
+        line-height: 2.5rem !important;
+    }
+    
+    /* Module grid */
+    .module-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+    }
+    
+    /* Flyout grid */
+    .flyout-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    /* Visualization */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 280px !important;
+    }
+}
+
+/* === MEDIUM DEVICES (Tablets, 641px - 768px) === */
+@media (min-width: 641px) and (max-width: 768px) {
+    /* Home page */
+    #home-page h1 {
+        font-size: 2.5rem !important;
+        line-height: 3rem !important;
+    }
+    
+    /* Module grid */
+    .module-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.25rem !important;
+    }
+    
+    /* Visualization */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 350px !important;
+    }
+}
+
+/* === MEDIUM-LARGE DEVICES (Small Laptops, 769px - 1024px) === */
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Module grid */
+    .module-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 1.5rem !important;
+    }
+    
+    /* Flyout grid */
+    .flyout-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+    }
+    
+    /* Visualization */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 400px !important;
+    }
+}
+
+/* === LARGE DEVICES (Desktops, 1025px - 1280px) === */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    .module-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+    
+    .flyout-grid {
+        grid-template-columns: repeat(6, 1fr) !important;
+    }
+}
+
+/* === EXTRA LARGE DEVICES (Large Desktops, > 1280px) === */
+@media (min-width: 1281px) {
+    .module-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+    
+    .flyout-grid {
+        grid-template-columns: repeat(8, 1fr) !important;
+    }
+    
+    /* Larger visualization on big screens */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 500px !important;
+    }
+}
+
+/* === UNIVERSAL MOBILE OPTIMIZATIONS (< 768px) === */
+@media (max-width: 767px) {
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Container padding */
+    .container, .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    /* Hide desktop navigation */
+    #nav-content-wrapper {
+        display: none !important;
+    }
+    
+    /* Mobile menu drawer */
+    #mobile-menu-drawer {
+        width: 100vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Touch-friendly tap targets (minimum 44x44px) */
+    button, a, input, select, textarea {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Larger input fields for mobile */
+    input[type="text"], textarea, select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.875rem;
+    }
+    
+    /* Stack elements vertically */
+    .flex-row {
+        flex-direction: column !important;
+    }
+    
+    /* Full width buttons on mobile */
+    .solver-button, button[type="submit"], button[type="button"] {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Card spacing */
+    .elegant-card, .bg-card {
+        margin: 1rem 0;
+        border-radius: 16px;
+    }
+    
+    /* Remove hover effects on mobile (prevents sticky hover) */
+    .flyout-link:hover,
+    .module-card-link:hover,
+    .futuristic-module:hover {
+        transform: none !important;
+    }
+    
+    /* Simplify animations on mobile for performance */
+    * {
+        animation-duration: 0.3s !important;
+    }
+    
+    /* Reduce shadow complexity */
+    .elegant-card, .bg-card, .solver-button {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body.dark .elegant-card,
+    body.dark .bg-card,
+    body.dark .solver-button {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+}
+
+/* === LANDSCAPE ORIENTATION FIXES === */
+@media (max-height: 600px) and (orientation: landscape) {
+    /* Reduce vertical spacing in landscape */
+    #home-page {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    .elegant-card, .bg-card {
+        margin: 0.5rem 0 !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Smaller hero text */
+    #home-page h1 {
+        font-size: 1.5rem !important;
+        line-height: 2rem !important;
+    }
+    
+    /* Compact visualization */
+    #dfa-network, #nfa-network, #dfamin-network,
+    .visualization-placeholder-box {
+        height: 200px !important;
+    }
+    
+    /* Compact module grid */
+    .module-grid {
+        gap: 0.75rem !important;
+    }
+}
+
+/* === HIGH DPI DISPLAYS (Retina, etc.) === */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Crisper text rendering */
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Sharper borders */
+    .elegant-card, .bg-card, button, input {
+        border-width: 0.5px;
+    }
+}
+
+/* === PRINT STYLES === */
+@media print {
+    /* Hide navigation and interactive elements */
+    nav, button, #mobile-menu-drawer, .flyout-container {
+        display: none !important;
+    }
+    
+    /* Ensure readable colors */
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    /* Page breaks */
+    .elegant-card, .bg-card {
+        page-break-inside: avoid;
+    }
+    
+    /* Remove shadows and effects */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+}
+
+/* === ACCESSIBILITY IMPROVEMENTS === */
+@media (prefers-reduced-motion: reduce) {
+    /* Disable animations for users who prefer reduced motion */
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* === DARK MODE ADJUSTMENTS === */
+@media (prefers-color-scheme: dark) {
+    /* Respect system dark mode preference */
+    body:not(.light-mode) {
+        background: var(--dark-bg-primary);
+        color: var(--dark-text-primary);
+    }
+}
+
+/* === TOUCH DEVICE OPTIMIZATIONS === */
+@media (hover: none) and (pointer: coarse) {
+    /* Remove hover states on touch devices */
+    .hover\:scale-105:hover,
+    .hover\:shadow-2xl:hover,
+    .hover\:bg-gray-200:hover {
+        transform: none !important;
+        box-shadow: inherit !important;
+        background-color: inherit !important;
+    }
+    
+    /* Larger tap targets */
+    button, a {
+        padding: 0.875rem 1.25rem;
+    }
+    
+    /* Remove transition delays */
+    * {
+        transition-delay: 0s !important;
+    }
+}
+
+/* === SPECIFIC COMPONENT RESPONSIVE FIXES === */
+
+/* Navigation Bar */
+@media (max-width: 767px) {
+    nav {
+        height: auto;
+        min-height: 60px;
+    }
+    
+    nav .flex {
+        flex-wrap: nowrap;
+    }
+}
+
+/* === FORM AND INPUT RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    /* Stack form groups vertically */
+    .form-group, .input-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    /* Full width inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Larger labels for readability */
+    label {
+        font-size: 0.9375rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    /* Textarea minimum height */
+    textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+}
+
+/* === TABLE RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    /* Make tables scrollable horizontally */
+    .table-container, table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Compact table styling */
+    table {
+        font-size: 0.8125rem;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        padding: 0.5rem 0.375rem;
+        white-space: nowrap;
+    }
+    
+    /* Sticky first column for better readability */
+    table th:first-child,
+    table td:first-child {
+        position: sticky;
+        left: 0;
+        background: inherit;
+        z-index: 1;
+    }
+    
+    /* Zebra striping for better readability */
+    tbody tr:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    body.dark tbody tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+}
+
+/* === CODE BLOCK RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    pre, code {
+        font-size: 0.8125rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .code-block {
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+    
+    /* Prevent code from breaking layout */
+    pre {
+        white-space: pre;
+        word-wrap: normal;
+        overflow-x: auto;
+    }
+}
+
+/* === MODAL AND DIALOG RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    .modal, .dialog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 2.5vh auto;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header, .dialog-header {
+        padding: 1rem;
+    }
+    
+    .modal-body, .dialog-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer, .dialog-footer {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-footer button,
+    .dialog-footer button {
+        width: 100%;
+    }
+}
+
+/* === GRID LAYOUT RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    /* Force single column on mobile for most grids */
+    .grid, .grid-cols-2, .grid-cols-3, .grid-cols-4 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Allow some flexibility for specific use cases */
+    .grid-cols-mobile-2 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Reduce gaps */
+    .gap-4 {
+        gap: 1rem !important;
+    }
+    
+    .gap-6 {
+        gap: 1.25rem !important;
+    }
+    
+    .gap-8 {
+        gap: 1.5rem !important;
+    }
+}
+
+/* === SPACING AND PADDING RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    /* Reduce page padding */
+    .page-container {
+        padding: 1rem !important;
+    }
+    
+    /* Compact section spacing */
+    section {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    /* Reduce card padding */
+    .card, .panel {
+        padding: 1rem !important;
+    }
+    
+    /* Compact headers */
+    h1 {
+        font-size: 1.875rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    h2 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    h3 {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    h4 {
+        font-size: 1.125rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* === IMAGE AND MEDIA RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    /* Responsive images */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* SVG responsiveness */
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Video responsiveness */
+    video, iframe {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* === BUTTON GROUP RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+    }
+    
+    .button-group button {
+        width: 100%;
+    }
+    
+    /* Horizontal button groups stack vertically */
+    .btn-group-horizontal {
+        flex-direction: column !important;
+    }
+}
+
+/* === TOOLTIP AND POPOVER RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    .tooltip, .popover {
+        max-width: 90vw;
+        font-size: 0.875rem;
+    }
+}
+
+/* === LOADING INDICATOR RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 767px) {
+    .spinner {
+        width: 36px;
+        height: 36px;
+        border-width: 3px;
+    }
+    
+    .loading-text {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+}
+
+/* === ERROR AND SUCCESS MESSAGES RESPONSIVE === */
+@media (max-width: 767px) {
+    .error-message, .success-message, .info-message, .warning-message {
+        padding: 0.875rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+    }
+}
+
+/* === SPECIFIC TOOL PAGES RESPONSIVE === */
+@media (max-width: 767px) {
+    /* Tool page main container */
+    .tool-page {
+        padding: 1rem !important;
+    }
+    
+    /* Tool input section */
+    .tool-input-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Tool output section */
+    .tool-output-section {
+        margin-top: 1.5rem;
+    }
+    
+    /* Formal definition cards */
+    #dfa-formal-definition-card,
+    #nfa-formal-definition-card,
+    #dfamin-formal-definition-card,
+    #re-formal-definition-card,
+    #cfg-formal-definition-card,
+    #pda-formal-definition-card,
+    #lba-formal-definition-card,
+    #tm-formal-definition-card,
+    #moore-formal-definition-card,
+    #mealy-formal-definition-card,
+    #nfatodfa-formal-definition-card {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    /* Transition tables */
+    #dfa-transition-table,
+    #nfa-transition-table,
+    #dfamin-transition-table,
+    #pda-transition-table,
+    #tm-transition-table,
+    #moore-transition-table,
+    #mealy-transition-table,
+    #nfatodfa-transition-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* === PERFORMANCE OPTIMIZATIONS FOR MOBILE === */
+@media (max-width: 767px) {
+    /* Reduce backdrop blur for performance */
+    .backdrop-blur {
+        backdrop-filter: blur(8px) !important;
+    }
+    
+    /* Simplify gradients */
+    .bg-gradient-to-r,
+    .bg-gradient-to-br,
+    .bg-gradient-to-bl {
+        background: linear-gradient(135deg, var(--color-start) 0%, var(--color-end) 100%) !important;
+    }
+    
+    /* Disable complex transforms on scroll */
+    .transform-gpu {
+        transform: none !important;
+    }
+}
+
+/* === UTILITY CLASSES FOR RESPONSIVE DESIGN === */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 767px) {
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .desktop-only {
+        display: none !important;
+    }
+    
+    .mobile-hidden {
+        display: none !important;
+    }
+    
+    .mobile-visible {
+        display: block !important;
+    }
+}
+
+/* === SAFE AREA INSETS FOR MOBILE DEVICES === */
+@supports (padding: env(safe-area-inset-top)) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+    
+    nav {
+        padding-top: calc(env(safe-area-inset-top) + 0.5rem);
+    }
+}
+
+/* === FIX FOR iOS SAFARI 100VH BUG === */
+@supports (-webkit-touch-callout: none) {
+    .min-h-screen {
+        min-height: -webkit-fill-available;
+    }
+    
+    body {
+        min-height: -webkit-fill-available;
+    }
+}

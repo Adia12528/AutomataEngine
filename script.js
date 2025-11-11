@@ -6,6 +6,82 @@ const API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/ge
 // Store DFA/NFA data globally after solution
 let currentAutomatonData = {};
 
+// --- MOBILE PERFORMANCE OPTIMIZATIONS ---
+
+/**
+ * Debounce function to limit how often a function can fire
+ * Essential for scroll, resize, and input events on mobile
+ */
+function debounce(func, wait = 150) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Throttle function to ensure a function fires at most once per interval
+ * Better for events that must fire regularly (like scroll tracking)
+ */
+function throttle(func, limit = 100) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+/**
+ * Detect if user is on a mobile device
+ */
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+}
+
+/**
+ * Request idle callback polyfill for better performance
+ */
+window.requestIdleCallback = window.requestIdleCallback || function(handler) {
+    let startTime = Date.now();
+    return setTimeout(function() {
+        handler({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50.0 - (Date.now() - startTime));
+            }
+        });
+    }, 1);
+};
+
+/**
+ * Passive event listener support check and helper
+ */
+let passiveSupported = false;
+try {
+    const options = {
+        get passive() {
+            passiveSupported = true;
+            return false;
+        }
+    };
+    window.addEventListener("test", null, options);
+    window.removeEventListener("test", null, options);
+} catch(err) {
+    passiveSupported = false;
+}
+
+function getPassiveOption() {
+    return passiveSupported ? { passive: true } : false;
+}
+
 // --- TOOL-SPECIFIC TIMER SYSTEM ---
 // Each tool gets its own independent timer to prevent conflicts when running multiple tools
 const toolTimers = {
@@ -2270,14 +2346,22 @@ async function generateTrace(prefix, question, testString) {
 // Renders the structured textual output for RE, CFG, LBA
 function renderStructuredVisualization(data, elements) {
     if (!data.visualizationOutput || !elements.networkContainer) {
-         elements.visualizationPlaceholder.classList.remove('hidden');
-         elements.networkContainer.classList.add('hidden');
-         return;
+        if (elements.visualizationPlaceholder) {
+            elements.visualizationPlaceholder.classList.remove('hidden');
+        }
+        if (elements.networkContainer) {
+            elements.networkContainer.classList.add('hidden');
+        }
+        return;
     }
     
-    elements.networkContainer.innerHTML = data.visualizationOutput;
-    elements.networkContainer.classList.remove('hidden');
-    elements.visualizationPlaceholder.classList.add('hidden');
+    if (elements.networkContainer) {
+        elements.networkContainer.innerHTML = data.visualizationOutput;
+        elements.networkContainer.classList.remove('hidden');
+    }
+    if (elements.visualizationPlaceholder) {
+        elements.visualizationPlaceholder.classList.add('hidden');
+    }
 }
 
 // Renders Formal Definition and Transition Table/Rules
@@ -2369,10 +2453,12 @@ function renderFormalDefinition(data, elements, type) {
 
 // Renders Simple Output (for RE)
 function renderSimpleOutput(data, elements) {
-     if (elements.formalDefinitionElement) {
-         elements.formalDefinitionElement.innerHTML = data.specialOutput;
-         elements.formalDefinitionCard.classList.remove('hidden');
-     }
+    if (elements.formalDefinitionElement) {
+        elements.formalDefinitionElement.innerHTML = data.specialOutput;
+    }
+    if (elements.formalDefinitionCard) {
+        elements.formalDefinitionCard.classList.remove('hidden');
+    }
 }
 
 // Renders the Flow Chart (State Diagram) - DFA/NFA/DFAMIN ONLY
@@ -2546,9 +2632,15 @@ function visualizeAutomaton(dfaData, elements) {
     });
 
     svg += `</svg>`;
-    elements.networkContainer.innerHTML = svg;
-    elements.networkContainer.classList.remove('hidden');
-    elements.visualizationPlaceholder.classList.add('hidden');
+    
+    // Update DOM with null checks
+    if (elements.networkContainer) {
+        elements.networkContainer.innerHTML = svg;
+        elements.networkContainer.classList.remove('hidden');
+    }
+    if (elements.visualizationPlaceholder) {
+        elements.visualizationPlaceholder.classList.add('hidden');
+    }
 }
 
 // --- Core Solver Logic (Shared and Type-Specific) ---
@@ -2662,20 +2754,29 @@ async function solveAutomaton(prefix) {
         const dataKey = (prefix === 'dfamin' ? 'dfa' : prefix);
         currentAutomatonData[dataKey] = data;
 
-        elements.correctedPromptElement.textContent = data.correctedPrompt;
-        elements.promptFeedback.classList.remove('hidden');
+        // Update corrected prompt with null check
+        if (elements.correctedPromptElement) {
+            elements.correctedPromptElement.textContent = data.correctedPrompt;
+        }
+        if (elements.promptFeedback) {
+            elements.promptFeedback.classList.remove('hidden');
+        }
 
         // Render Formal Definition and Transitions/Rules first
         if (prefix === 're') {
             renderSimpleOutput(data, elements);
         } else {
             // Ensure appropriate classes for card elements in dark mode
-            elements.formalDefinitionCard.classList.add('bg-card');
-            if (document.body.classList.contains('dark')) {
-                elements.formalDefinitionCard.classList.remove('bg-white');
+            if (elements.formalDefinitionCard) {
+                elements.formalDefinitionCard.classList.add('bg-card');
+                if (document.body.classList.contains('dark')) {
+                    elements.formalDefinitionCard.classList.remove('bg-white');
+                }
             }
             renderFormalDefinition(data, elements, prefix);
-            elements.formalDefinitionCard.classList.remove('hidden');
+            if (elements.formalDefinitionCard) {
+                elements.formalDefinitionCard.classList.remove('hidden');
+            }
         }
 
         // --- STEP 2: Render Visualization ---
@@ -2708,7 +2809,9 @@ async function solveAutomaton(prefix) {
         // Ensure visualization placeholder is visible on failure if it exists
         if (elements.visualizationPlaceholder) {
             elements.visualizationPlaceholder.classList.remove('hidden');
-            elements.networkContainer?.classList.add('hidden');
+        }
+        if (elements.networkContainer) {
+            elements.networkContainer.classList.add('hidden');
         }
     } finally {
         // CRITICAL: AGGRESSIVE cleanup to prevent stuck state
@@ -3415,8 +3518,12 @@ function testMealyString() {
 // --- General App/Routing Functions ---
 
 function displayError(elements, message) {
-    elements.errorText.textContent = message;
-    elements.errorMessageDiv.classList.remove('hidden');
+    if (elements.errorText) {
+        elements.errorText.textContent = message;
+    }
+    if (elements.errorMessageDiv) {
+        elements.errorMessageDiv.classList.remove('hidden');
+    }
 }
 
 function setActiveNav(pageId) {
