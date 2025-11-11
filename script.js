@@ -5,15 +5,24 @@ const API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/ge
 
 // Store DFA/NFA data globally after solution
 let currentAutomatonData = {};
-let timerInterval; // Global variable for the timer interval
-let timerRAFId; // RequestAnimationFrame ID for timer (cleanup purposes)
 
-// --- ENHANCED TOOL-SPECIFIC TIMER SYSTEM ---
-// Each tool gets its own independent timer to prevent conflicts
+// --- TOOL-SPECIFIC TIMER SYSTEM ---
+// Each tool gets its own independent timer to prevent conflicts when running multiple tools
 const toolTimers = {
-    pythonCode: { interval: null, startTime: null, element: null },
-    formalLanguage: { interval: null, startTime: null, element: null },
-    testCases: { interval: null, startTime: null, element: null }
+    dfa: { interval: null, startTime: null },
+    nfa: { interval: null, startTime: null },
+    dfamin: { interval: null, startTime: null },
+    re: { interval: null, startTime: null },
+    cfg: { interval: null, startTime: null },
+    pda: { interval: null, startTime: null },
+    lba: { interval: null, startTime: null },
+    tm: { interval: null, startTime: null },
+    moore: { interval: null, startTime: null },
+    mealy: { interval: null, startTime: null },
+    nfatodfa: { interval: null, startTime: null },
+    pythonCode: { interval: null, startTime: null },
+    formalLanguage: { interval: null, startTime: null },
+    testCases: { interval: null, startTime: null }
 };
 
 /**
@@ -1676,50 +1685,89 @@ function getElements(prefix) {
 }
 
 /**
- * Starts the visual timer in the loading indicator.
- * @param {object} elements - The element collection for the current page.
+ * Starts a tool-specific timer - REDESIGNED for core automation tools
+ * Simple, robust implementation that prevents stuck timers
+ * @param {object} elements - The element collection for the current page
+ * @param {string} prefix - The tool prefix (dfa, nfa, dfamin, re, cfg, pda, lba, tm)
  */
-/**
- * Optimized Timer - Uses setInterval with longer intervals
- * Updates every 500ms instead of every 100ms to prevent UI freezing
- */
-function startTimer(elements) {
-    // Clear any existing timers first
-    if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-    if (timerRAFId) {
-        cancelAnimationFrame(timerRAFId);
-        timerRAFId = null;
+function startTimer(elements, prefix) {
+    if (!prefix || !toolTimers[prefix]) {
+        console.error(`Invalid timer prefix: ${prefix}`);
+        return;
     }
     
-    const startTime = performance.now();
+    // CRITICAL: Force complete cleanup of any existing timer first
+    stopTimer(prefix);
     
-    // Use setInterval with 500ms delay - much simpler and prevents sticking
-    timerInterval = setInterval(() => {
-        const elapsed = (performance.now() - startTime) / 1000;
-        if (elements.timeElapsed) {
-            elements.timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+    // Small delay to ensure cleanup completes before starting new timer
+    setTimeout(() => {
+        // Reset display to zero
+        if (elements && elements.timeElapsed) {
+            elements.timeElapsed.textContent = '0.00s';
         }
-    }, 500); // Update every 500ms instead of 100ms
+        
+        // Record new start time
+        toolTimers[prefix].startTime = Date.now();
+        
+        // Create completely fresh interval
+        toolTimers[prefix].interval = setInterval(() => {
+            // Safety check - stop if timer was cleared
+            if (!toolTimers[prefix] || !toolTimers[prefix].startTime) {
+                if (toolTimers[prefix] && toolTimers[prefix].interval) {
+                    clearInterval(toolTimers[prefix].interval);
+                    toolTimers[prefix].interval = null;
+                }
+                return;
+            }
+            
+            // Calculate and display elapsed time
+            const elapsed = (Date.now() - toolTimers[prefix].startTime) / 1000;
+            if (elements && elements.timeElapsed) {
+                elements.timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+            }
+        }, 100);
+    }, 50); // 50ms delay ensures previous timer is fully cleared
 }
 
 /**
- * Stops the visual timer and cleans up all timer resources
+ * Stops a tool-specific timer - REDESIGNED for complete reliability
+ * Ensures timer is fully cleared with aggressive cleanup
+ * @param {string} prefix - The tool prefix
  */
-function stopTimer() {
-    // Cancel any RAF callbacks
-    if (timerRAFId) {
-        cancelAnimationFrame(timerRAFId);
-        timerRAFId = null;
+function stopTimer(prefix) {
+    if (!prefix || !toolTimers[prefix]) {
+        // Fallback: aggressively clear ALL timers
+        Object.keys(toolTimers).forEach(key => {
+            if (toolTimers[key] && toolTimers[key].interval) {
+                clearInterval(toolTimers[key].interval);
+                clearInterval(toolTimers[key].interval); // Double clear for safety
+            }
+            if (toolTimers[key]) {
+                toolTimers[key].interval = null;
+                toolTimers[key].startTime = null;
+            }
+        });
+        return;
     }
     
-    // Clear interval with immediate null check
-    if (timerInterval !== undefined && timerInterval !== null) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+    // AGGRESSIVE CLEANUP: Multiple clears to ensure timer stops
+    if (toolTimers[prefix].interval) {
+        const intervalId = toolTimers[prefix].interval;
+        clearInterval(intervalId);
+        clearInterval(intervalId); // Double clear
+        
+        // Force additional clear after small delay
+        setTimeout(() => {
+            clearInterval(intervalId);
+        }, 10);
     }
+    
+    // Immediately null out all references
+    toolTimers[prefix].interval = null;
+    toolTimers[prefix].startTime = null;
+    
+    // Force garbage collection hint
+    toolTimers[prefix] = { interval: null, startTime: null };
 }
 
 // --- ENHANCED REQUEST MANAGER WITH PRIORITY QUEUE ---
@@ -2507,9 +2555,24 @@ function visualizeAutomaton(dfaData, elements) {
 
 async function solveAutomaton(prefix) {
     const elements = getElements(prefix);
+    
+    // CRITICAL: Stop any running timer FIRST before anything else
+    stopTimer(prefix);
+    
+    // Validate critical elements exist
+    if (!elements.questionInput) {
+        console.error(`${prefix}: Question input element not found`);
+        return;
+    }
+    if (!elements.solveButton) {
+        console.error(`${prefix}: Solve button element not found`);
+        return;
+    }
+    
     const question = elements.questionInput.value.trim();
     const testString = elements.testStringInput ? elements.testStringInput.value.trim() : null;
 
+    // Early validation checks (BEFORE disabling button or starting timer)
     if (!question) {
         displayError(elements, `Please enter a ${prefix.toUpperCase()} design question.`);
         return;
@@ -2525,27 +2588,43 @@ async function solveAutomaton(prefix) {
         return;
     }
 
-    // UI State: Loading
-    elements.solveButton.disabled = true;
-    elements.loadingIndicator.classList.remove('hidden');
-    elements.formalDefinitionCard.classList.add('hidden');
-    elements.promptFeedback.classList.add('hidden');
-    elements.errorMessageDiv.classList.add('hidden');
+    // COMPLETE UI RESET: Clear all previous state before starting
+    if (elements.solveButton) {
+        elements.solveButton.disabled = true;
+    }
+    if (elements.loadingIndicator) {
+        elements.loadingIndicator.classList.remove('hidden');
+    }
+    if (elements.formalDefinitionCard) {
+        elements.formalDefinitionCard.classList.add('hidden');
+    }
+    if (elements.promptFeedback) {
+        elements.promptFeedback.classList.add('hidden');
+    }
+    if (elements.errorMessageDiv) {
+        elements.errorMessageDiv.classList.add('hidden');
+    }
     
-    // Clear previous results
+    // Reset timer display to zero before starting
+    if (elements.timeElapsed) {
+        elements.timeElapsed.textContent = '0.00s';
+    }
+    
+    // Clear previous results completely
     if (elements.networkContainer) {
-        // If the container exists, clear it for the next visualization
-        elements.networkContainer.innerHTML = elements.visualizationPlaceholder.outerHTML;
-        elements.visualizationPlaceholder.classList.remove('hidden');
-        elements.networkContainer.classList.add('hidden'); // Hide until content is ready
+        elements.networkContainer.innerHTML = '';
+        if (elements.visualizationPlaceholder) {
+            elements.visualizationPlaceholder.classList.remove('hidden');
+        }
+        elements.networkContainer.classList.add('hidden');
     } else {
-        // For RE/CFG, simply hide the placeholder text content
-        document.getElementById(`${prefix}-visualization-placeholder`).classList.remove('hidden');
-        document.getElementById(`${prefix}-network`).classList.add('hidden');
+        const placeholder = document.getElementById(`${prefix}-visualization-placeholder`);
+        const network = document.getElementById(`${prefix}-network`);
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (network) network.classList.add('hidden');
     }
 
-
-    // Null checks for output containers
+    // Clear output containers
     if (elements.transitionTableElement) {
         elements.transitionTableElement.innerHTML = '';
     }
@@ -2553,8 +2632,8 @@ async function solveAutomaton(prefix) {
         elements.formalDefinitionElement.innerHTML = '';
     }
     
-    // Start the timer
-    startTimer(elements);
+    // NOW start the fresh timer after complete cleanup
+    startTimer(elements, prefix);
 
     try {
         // Construct the full prompt for non-automata
@@ -2603,10 +2682,10 @@ async function solveAutomaton(prefix) {
         if (isTwoStep) {
             // For PDA/TM: Trigger the separate Trace Generation API call
             if (!testString) {
-                elements.loadingIndicator.classList.add('hidden');
+                stopTimer(prefix);
+                if (elements.loadingIndicator) elements.loadingIndicator.classList.add('hidden');
+                if (elements.solveButton) elements.solveButton.disabled = false;
                 displayError(elements, `Please provide an Input string for the **Computation Trace** in the field below the prompt.`);
-                elements.solveButton.disabled = false;
-                stopTimer(); // Ensure timer is stopped if flow is interrupted
                 return;
             }
             // Pass the formal definition data to the trace generator
@@ -2632,31 +2711,129 @@ async function solveAutomaton(prefix) {
             elements.networkContainer?.classList.add('hidden');
         }
     } finally {
-        stopTimer();
-        elements.loadingIndicator.classList.add('hidden');
-        elements.solveButton.disabled = false;
+        // CRITICAL: AGGRESSIVE cleanup to prevent stuck state
+        
+        // Stop timer with delay to ensure it completes
+        stopTimer(prefix);
+        
+        // Additional delayed cleanup to ensure state is fully reset
+        setTimeout(() => {
+            // Force stop again in case of race condition
+            stopTimer(prefix);
+            
+            // Reset ALL UI elements to ready state
+            if (elements.loadingIndicator) {
+                elements.loadingIndicator.classList.add('hidden');
+            }
+            if (elements.solveButton) {
+                elements.solveButton.disabled = false;
+            }
+            
+            // Ensure timer display is visible and reset
+            if (elements.timeElapsed) {
+                elements.timeElapsed.style.display = '';
+                // Don't reset to 0 here - let it show final time
+            }
+        }, 100);
     }
 }
 
-// --- Type-Specific Wrappers (UNCHANGED LOGIC) ---
-async function solveDFA() { await solveAutomaton('dfa'); }
-async function solveNFA() { await solveAutomaton('nfa'); }
-async function solveDFAMin() { await solveAutomaton('dfamin'); }
-async function solveRE() { await solveAutomaton('re'); }
-async function solveCFG() { await solveAutomaton('cfg'); }
-async function solvePDA() { await solveAutomaton('pda'); }
-async function solveLBA() { await solveAutomaton('lba'); }
-async function solveTM() { await solveAutomaton('tm'); }
+// --- Type-Specific Wrappers with Double-Click Prevention ---
+// Prevents multiple simultaneous executions
+const executionLocks = {
+    dfa: false, nfa: false, dfamin: false, re: false,
+    cfg: false, pda: false, lba: false, tm: false
+};
+
+async function solveDFA() { 
+    if (executionLocks.dfa) return;
+    executionLocks.dfa = true;
+    try {
+        await solveAutomaton('dfa');
+    } finally {
+        executionLocks.dfa = false;
+    }
+}
+
+async function solveNFA() { 
+    if (executionLocks.nfa) return;
+    executionLocks.nfa = true;
+    try {
+        await solveAutomaton('nfa');
+    } finally {
+        executionLocks.nfa = false;
+    }
+}
+
+async function solveDFAMin() { 
+    if (executionLocks.dfamin) return;
+    executionLocks.dfamin = true;
+    try {
+        await solveAutomaton('dfamin');
+    } finally {
+        executionLocks.dfamin = false;
+    }
+}
+
+async function solveRE() { 
+    if (executionLocks.re) return;
+    executionLocks.re = true;
+    try {
+        await solveAutomaton('re');
+    } finally {
+        executionLocks.re = false;
+    }
+}
+
+async function solveCFG() { 
+    if (executionLocks.cfg) return;
+    executionLocks.cfg = true;
+    try {
+        await solveAutomaton('cfg');
+    } finally {
+        executionLocks.cfg = false;
+    }
+}
+
+async function solvePDA() { 
+    if (executionLocks.pda) return;
+    executionLocks.pda = true;
+    try {
+        await solveAutomaton('pda');
+    } finally {
+        executionLocks.pda = false;
+    }
+}
+
+async function solveLBA() { 
+    if (executionLocks.lba) return;
+    executionLocks.lba = true;
+    try {
+        await solveAutomaton('lba');
+    } finally {
+        executionLocks.lba = false;
+    }
+}
+
+async function solveTM() { 
+    if (executionLocks.tm) return;
+    executionLocks.tm = true;
+    try {
+        await solveAutomaton('tm');
+    } finally {
+        executionLocks.tm = false;
+    }
+}
 
 // ============================================================
 // NEW FEATURES: NFA to DFA, Moore Machine, Mealy Machine
+// COMPLETELY REDESIGNED FROM SCRATCH
 // ============================================================
 
-// NFA to DFA Conversion
+// NFA to DFA Conversion - FRESH IMPLEMENTATION
 async function solveNFAtoDFA() {
     const questionInput = document.getElementById('nfatodfa-question');
     const loadingIndicator = document.getElementById('nfatodfa-loading-indicator');
-    const timerText = document.getElementById('nfatodfa-timer-text');
     const timeElapsed = document.getElementById('nfatodfa-time-elapsed');
     const solveButton = document.getElementById('solve-nfatodfa-button');
     const promptFeedback = document.getElementById('nfatodfa-prompt-feedback');
@@ -2668,143 +2845,104 @@ async function solveNFAtoDFA() {
 
     const question = questionInput.value.trim();
     if (!question) {
-        displayError({ errorText, errorMessageDiv }, 'Please enter an NFA description.');
+        errorText.textContent = 'Please enter an NFA description.';
+        errorMessageDiv.classList.remove('hidden');
         return;
     }
 
-    // Hide previous results and errors
-    originalNFACard.classList.add('hidden');
-    convertedDFACard.classList.add('hidden');
-    errorMessageDiv.classList.add('hidden');
-    promptFeedback.classList.add('hidden');
-    
-    // Show loading indicator
-    loadingIndicator.classList.remove('hidden');
-    solveButton.disabled = true;
+    // Reset UI
+    if (originalNFACard) originalNFACard.classList.add('hidden');
+    if (convertedDFACard) convertedDFACard.classList.add('hidden');
+    if (errorMessageDiv) errorMessageDiv.classList.add('hidden');
+    if (promptFeedback) promptFeedback.classList.add('hidden');
+    if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+    if (solveButton) solveButton.disabled = true;
 
-    // Clear any existing timer and start new one
-    if (window.nfaToDfaTimer) {
-        clearInterval(window.nfaToDfaTimer);
-        window.nfaToDfaTimer = null;
-    }
-    
-    const startTime = performance.now();
-    window.nfaToDfaTimer = setInterval(() => {
-        const elapsed = (performance.now() - startTime) / 1000;
-        timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+    // Start tool-specific timer
+    if (toolTimers.nfatodfa.interval) clearInterval(toolTimers.nfatodfa.interval);
+    toolTimers.nfatodfa.startTime = performance.now();
+    toolTimers.nfatodfa.interval = setInterval(() => {
+        if (timeElapsed) {
+            const elapsed = (performance.now() - toolTimers.nfatodfa.startTime) / 1000;
+            timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+        }
     }, 100);
 
     try {
-        const prompt = `You are an expert in automata theory. Given the following NFA description, perform the subset construction algorithm to convert it to a DFA.
+        // Simplified prompt - ask for plain JSON only
+        const prompt = `Convert the following NFA description to DFA using subset construction.
 
-NFA Description: ${question}
+Description: ${question}
 
-Please provide:
-1. The original NFA formal definition: M_NFA = (Q, Σ, δ, q0, F) with complete transition function
-2. Step-by-step subset construction showing how each DFA state is formed from NFA state sets
-3. The resulting DFA formal definition: M_DFA = (Q', Σ, δ', q0', F')
-4. Transition tables for both NFA and DFA
-5. Visual state diagrams for both NFA and DFA using Mermaid.js syntax
-
-Format your response as valid JSON:
+Provide ONLY a JSON response (no markdown, no explanations) in this exact format:
 {
-    "originalNFA": {
-        "states": ["q0", "q1", ...],
-        "alphabet": ["a", "b", ...],
-        "transitions": {"q0": {"a": ["q1", "q2"], "b": ["q0"]}, ...},
-        "startState": "q0",
-        "acceptStates": ["q2"]
-    },
-    "conversionSteps": [
-        "Step 1: Start with {q0}",
-        "Step 2: δ'({q0}, a) = {q1, q2}",
-        ...
-    ],
-    "convertedDFA": {
-        "states": ["{q0}", "{q1,q2}", ...],
-        "alphabet": ["a", "b"],
-        "transitions": {"{q0}": {"a": "{q1,q2}", "b": "{q0}"}, ...},
-        "startState": "{q0}",
-        "acceptStates": ["{q1,q2}"]
-    },
-    "nfaDiagram": "stateDiagram-v2\\n    [*] --> q0\\n    q0 --> q1: a\\n    ...",
-    "dfaDiagram": "stateDiagram-v2\\n    [*] --> {q0}\\n    {q0} --> {q1,q2}: a\\n    ...",
-    "refinedPrompt": "Clearer version of the prompt if needed"
+  "originalNFA": {
+    "states": ["q0", "q1"],
+    "alphabet": ["a", "b"],
+    "transitions": {"q0": {"a": ["q1"], "b": ["q0"]}},
+    "startState": "q0",
+    "acceptStates": ["q1"]
+  },
+  "convertedDFA": {
+    "states": ["{q0}", "{q1}"],
+    "alphabet": ["a", "b"],
+    "transitions": {"{q0}": {"a": "{q1}", "b": "{q0}"}},
+    "startState": "{q0}",
+    "acceptStates": ["{q1}"]
+  },
+  "conversionSteps": ["Step 1: ...", "Step 2: ..."]
 }`;
 
         const response = await fetch(API_URL_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
         if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
         const data = await response.json();
         
         clearInterval(window.nfaToDfaTimer);
-        window.nfaToDfaTimer = null;
         loadingIndicator.classList.add('hidden');
         solveButton.disabled = false;
 
-        const responseText = data.candidates[0].content.parts[0].text;
+        // Extract and parse JSON
+        let responseText = data.candidates[0].content.parts[0].text;
+        console.log('Raw API Response:', responseText);
         
-        // Enhanced JSON extraction with better cleaning
-        let cleanJson = responseText.trim();
+        // Clean up response - remove markdown and extra text
+        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        // Remove markdown code blocks (```json, ```, etc.)
-        cleanJson = cleanJson.replace(/```json\s*/g, '');
-        cleanJson = cleanJson.replace(/```javascript\s*/g, '');
-        cleanJson = cleanJson.replace(/```\s*/g, '');
-        cleanJson = cleanJson.trim();
+        // Find JSON object
+        const jsonStart = responseText.indexOf('{');
+        const jsonEnd = responseText.lastIndexOf('}');
         
-        // Extract JSON object - find first { to last }
-        const firstBrace = cleanJson.indexOf('{');
-        const lastBrace = cleanJson.lastIndexOf('}');
-        
-        if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-            throw new Error('No valid JSON object found in API response');
+        if (jsonStart === -1 || jsonEnd === -1) {
+            throw new Error('No JSON found in response');
         }
         
-        const jsonString = cleanJson.substring(firstBrace, lastBrace + 1);
+        const jsonStr = responseText.substring(jsonStart, jsonEnd + 1);
+        console.log('Extracted JSON:', jsonStr.substring(0, 200) + '...');
         
-        let result;
-        try {
-            result = JSON.parse(jsonString);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Attempted to parse:', jsonString.substring(0, 200));
-            throw new Error(`Failed to parse API response: ${parseError.message}`);
-        }
+        const result = JSON.parse(jsonStr);
 
-        // Display refined prompt if provided
-        if (result.refinedPrompt && result.refinedPrompt !== question) {
-            correctedPrompt.textContent = result.refinedPrompt;
-            promptFeedback.classList.remove('hidden');
-        }
-
-        // Display Original NFA
-        const nfaHTML = `
-            <p class="mb-2"><strong>States (Q):</strong> {${result.originalNFA.states.join(', ')}}</p>
-            <p class="mb-2"><strong>Alphabet (Σ):</strong> {${result.originalNFA.alphabet.join(', ')}}</p>
-            <p class="mb-2"><strong>Start State (q₀):</strong> ${result.originalNFA.startState}</p>
-            <p class="mb-2"><strong>Accept States (F):</strong> {${result.originalNFA.acceptStates.join(', ')}}</p>
+        // Display NFA
+        document.getElementById('nfatodfa-original-nfa').innerHTML = `
+            <p class="mb-2"><strong>States:</strong> {${result.originalNFA.states.join(', ')}}</p>
+            <p class="mb-2"><strong>Alphabet:</strong> {${result.originalNFA.alphabet.join(', ')}}</p>
+            <p class="mb-2"><strong>Start:</strong> ${result.originalNFA.startState}</p>
+            <p class="mb-2"><strong>Accept:</strong> {${result.originalNFA.acceptStates.join(', ')}}</p>
         `;
-        document.getElementById('nfatodfa-original-nfa').innerHTML = nfaHTML;
 
-        // NFA Transition Table
+        // NFA Table
         let nfaTable = '<table class="transition-table"><thead><tr><th>State</th>';
-        result.originalNFA.alphabet.forEach(symbol => {
-            nfaTable += `<th>${symbol}</th>`;
-        });
+        result.originalNFA.alphabet.forEach(sym => nfaTable += `<th>${sym}</th>`);
         nfaTable += '</tr></thead><tbody>';
-        
         result.originalNFA.states.forEach(state => {
-            nfaTable += `<tr><td class="font-bold">${state}</td>`;
-            result.originalNFA.alphabet.forEach(symbol => {
-                const nextStates = result.originalNFA.transitions[state]?.[symbol] || [];
-                nfaTable += `<td>{${nextStates.join(', ')}}</td>`;
+            nfaTable += `<tr><td>${state}</td>`;
+            result.originalNFA.alphabet.forEach(sym => {
+                const next = result.originalNFA.transitions[state]?.[sym] || [];
+                nfaTable += `<td>{${Array.isArray(next) ? next.join(', ') : next}}</td>`;
             });
             nfaTable += '</tr>';
         });
@@ -2813,391 +2951,284 @@ Format your response as valid JSON:
 
         originalNFACard.classList.remove('hidden');
 
-        // Display Converted DFA
-        const dfaHTML = `
-            <p class="mb-2"><strong>States (Q'):</strong> {${result.convertedDFA.states.join(', ')}}</p>
-            <p class="mb-2"><strong>Alphabet (Σ):</strong> {${result.convertedDFA.alphabet.join(', ')}}</p>
-            <p class="mb-2"><strong>Start State (q₀'):</strong> ${result.convertedDFA.startState}</p>
-            <p class="mb-2"><strong>Accept States (F'):</strong> {${result.convertedDFA.acceptStates.join(', ')}}</p>
+        // Display DFA
+        document.getElementById('nfatodfa-converted-dfa').innerHTML = `
+            <p class="mb-2"><strong>States:</strong> {${result.convertedDFA.states.join(', ')}}</p>
+            <p class="mb-2"><strong>Alphabet:</strong> {${result.convertedDFA.alphabet.join(', ')}}</p>
+            <p class="mb-2"><strong>Start:</strong> ${result.convertedDFA.startState}</p>
+            <p class="mb-2"><strong>Accept:</strong> {${result.convertedDFA.acceptStates.join(', ')}}</p>
         `;
-        document.getElementById('nfatodfa-converted-dfa').innerHTML = dfaHTML;
 
-        // DFA Transition Table
+        // DFA Table
         let dfaTable = '<table class="transition-table"><thead><tr><th>State</th>';
-        result.convertedDFA.alphabet.forEach(symbol => {
-            dfaTable += `<th>${symbol}</th>`;
-        });
+        result.convertedDFA.alphabet.forEach(sym => dfaTable += `<th>${sym}</th>`);
         dfaTable += '</tr></thead><tbody>';
-        
         result.convertedDFA.states.forEach(state => {
-            dfaTable += `<tr><td class="font-bold">${state}</td>`;
-            result.convertedDFA.alphabet.forEach(symbol => {
-                const nextState = result.convertedDFA.transitions[state]?.[symbol] || '∅';
-                dfaTable += `<td>${nextState}</td>`;
+            dfaTable += `<tr><td>${state}</td>`;
+            result.convertedDFA.alphabet.forEach(sym => {
+                const next = result.convertedDFA.transitions[state]?.[sym] || '∅';
+                dfaTable += `<td>${next}</td>`;
             });
             dfaTable += '</tr>';
         });
         dfaTable += '</tbody></table>';
         document.getElementById('nfatodfa-dfa-table').innerHTML = dfaTable;
 
-        // Display conversion steps
-        const stepsHTML = result.conversionSteps.map((step, i) => 
-            `<div class="mb-2"><strong>Step ${i + 1}:</strong> ${step}</div>`
-        ).join('');
-        document.getElementById('nfatodfa-steps').innerHTML = stepsHTML;
+        // Steps
+        document.getElementById('nfatodfa-steps').innerHTML = 
+            result.conversionSteps.map((s, i) => `<div class="mb-2"><strong>Step ${i+1}:</strong> ${s}</div>`).join('');
 
         convertedDFACard.classList.remove('hidden');
 
-        // Render visualizations using Mermaid diagrams
-        const nfaVizContainer = document.getElementById('nfatodfa-nfa-viz');
-        const dfaVizContainer = document.getElementById('nfatodfa-dfa-viz');
-        
-        // Clear previous content
-        nfaVizContainer.innerHTML = '';
-        dfaVizContainer.innerHTML = '';
-        
-        if (result.nfaDiagram) {
-            nfaVizContainer.innerHTML = `<pre class="mermaid">${result.nfaDiagram}</pre>`;
-        } else {
-            // Fallback: Generate diagram from data
-            nfaVizContainer.innerHTML = generateStateDiagramHTML(result.originalNFA, 'NFA');
-        }
-        
-        if (result.dfaDiagram) {
-            dfaVizContainer.innerHTML = `<pre class="mermaid">${result.dfaDiagram}</pre>`;
-        } else {
-            // Fallback: Generate diagram from data
-            dfaVizContainer.innerHTML = generateStateDiagramHTML(result.convertedDFA, 'DFA');
-        }
-
-        // Reinitialize Mermaid for new diagrams
-        if (typeof mermaid !== 'undefined') {
-            try {
-                // Use run() to render newly added mermaid diagrams
-                await mermaid.run({
-                    querySelector: '.mermaid'
-                });
-            } catch (e) {
-                console.log('Mermaid rendering:', e);
-            }
-        }
+        // Simple text diagrams (no Mermaid complexity)
+        document.getElementById('nfatodfa-nfa-viz').innerHTML = createSimpleDiagram(result.originalNFA, 'NFA');
+        document.getElementById('nfatodfa-dfa-viz').innerHTML = createSimpleDiagram(result.convertedDFA, 'DFA');
 
     } catch (error) {
-        clearInterval(window.nfaToDfaTimer);
-        window.nfaToDfaTimer = null;
-        loadingIndicator.classList.add('hidden');
-        solveButton.disabled = false;
-        displayError({ errorText, errorMessageDiv }, error.message);
+        console.error('NFA to DFA Error:', error);
+        if (errorText) errorText.textContent = error.message;
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+    } finally {
+        // Stop tool-specific timer
+        if (toolTimers.nfatodfa.interval) {
+            clearInterval(toolTimers.nfatodfa.interval);
+            toolTimers.nfatodfa.interval = null;
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (solveButton) solveButton.disabled = false;
     }
 }
 
+// Moore Machine - FRESH IMPLEMENTATION
 async function solveMoore() {
     const questionInput = document.getElementById('moore-question');
     const loadingIndicator = document.getElementById('moore-loading-indicator');
-    const timerText = document.getElementById('moore-timer-text');
     const timeElapsed = document.getElementById('moore-time-elapsed');
     const solveButton = document.getElementById('solve-moore-button');
-    const promptFeedback = document.getElementById('moore-prompt-feedback');
-    const correctedPrompt = document.getElementById('moore-corrected-prompt');
     const formalDefinitionCard = document.getElementById('moore-formal-definition-card');
     const errorMessageDiv = document.getElementById('moore-error-message');
     const errorText = document.getElementById('moore-error-text');
 
-    const question = questionInput.value.trim();
-    if (!question) {
-        displayError({ errorText, errorMessageDiv }, 'Please enter a Moore machine description.');
+    if (!questionInput) {
+        console.error('Moore question input element not found');
         return;
     }
 
-    // Hide previous results
-    formalDefinitionCard.classList.add('hidden');
-    errorMessageDiv.classList.add('hidden');
-    promptFeedback.classList.add('hidden');
-    document.getElementById('moore-test-output').classList.add('hidden');
-    
-    loadingIndicator.classList.remove('hidden');
-    solveButton.disabled = true;
-
-    // Clear any existing timer and start new one
-    if (window.mooreTimer) {
-        clearInterval(window.mooreTimer);
-        window.mooreTimer = null;
+    const question = questionInput.value.trim();
+    if (!question) {
+        if (errorText) errorText.textContent = 'Please enter a Moore machine description.';
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+        return;
     }
-    
-    const startTime = performance.now();
-    window.mooreTimer = setInterval(() => {
-        const elapsed = (performance.now() - startTime) / 1000;
-        timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+
+    // Reset UI
+    if (formalDefinitionCard) formalDefinitionCard.classList.add('hidden');
+    if (errorMessageDiv) errorMessageDiv.classList.add('hidden');
+    const testOutput = document.getElementById('moore-test-output');
+    if (testOutput) testOutput.classList.add('hidden');
+    if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+    if (solveButton) solveButton.disabled = true;
+
+    // Timer
+    if (toolTimers.moore.interval) clearInterval(toolTimers.moore.interval);
+    toolTimers.moore.startTime = performance.now();
+    toolTimers.moore.interval = setInterval(() => {
+        if (timeElapsed) {
+            const elapsed = (performance.now() - toolTimers.moore.startTime) / 1000;
+            timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+        }
     }, 100);
 
     try {
-        const prompt = `You are an expert in automata theory. Design a Moore machine based on this description:
+        const prompt = `Design a Moore machine for: ${question}
 
-${question}
+In Moore machines, outputs are on states (not transitions).
 
-In a Moore machine, outputs are associated with states (not transitions).
-
-Provide your response as valid JSON including a Mermaid state diagram:
+Provide ONLY a JSON response (no markdown) in this format:
 {
-    "states": ["q0", "q1", "q2"],
-    "alphabet": ["a", "b"],
-    "outputs": ["X", "Y"],
-    "transitions": {"q0": {"a": "q1", "b": "q0"}, "q1": {"a": "q2", "b": "q1"}, ...},
-    "outputFunction": {"q0": "X", "q1": "Y", "q2": "X"},
-    "startState": "q0",
-    "diagram": "stateDiagram-v2\\n    [*] --> q0\\n    state q0 {\\n        X\\n    }\\n    q0 --> q1: a\\n    ...",
-    "refinedPrompt": "Clearer version if needed"
+  "states": ["q0", "q1", "q2"],
+  "alphabet": ["a", "b"],
+  "outputs": ["0", "1"],
+  "transitions": {"q0": {"a": "q1", "b": "q0"}, "q1": {"a": "q2", "b": "q1"}},
+  "outputFunction": {"q0": "0", "q1": "1", "q2": "0"},
+  "startState": "q0"
 }`;
 
         const response = await fetch(API_URL_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
         if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
         const data = await response.json();
         
-        clearInterval(window.mooreTimer);
-        window.mooreTimer = null;
-        loadingIndicator.classList.add('hidden');
-        solveButton.disabled = false;
+        // Stop timer on successful response
+        if (toolTimers.moore.interval) {
+            clearInterval(toolTimers.moore.interval);
+            toolTimers.moore.interval = null;
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (solveButton) solveButton.disabled = false;
 
-        const responseText = data.candidates[0].content.parts[0].text;
+        // Parse JSON
+        let responseText = data.candidates[0].content.parts[0].text;
+        console.log('Moore Response:', responseText);
+        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        // Enhanced JSON extraction with better cleaning
-        let cleanJson = responseText.trim();
+        const jsonStart = responseText.indexOf('{');
+        const jsonEnd = responseText.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found');
         
-        // Remove markdown code blocks (```json, ```, etc.)
-        cleanJson = cleanJson.replace(/```json\s*/g, '');
-        cleanJson = cleanJson.replace(/```javascript\s*/g, '');
-        cleanJson = cleanJson.replace(/```\s*/g, '');
-        cleanJson = cleanJson.trim();
-        
-        // Extract JSON object - find first { to last }
-        const firstBrace = cleanJson.indexOf('{');
-        const lastBrace = cleanJson.lastIndexOf('}');
-        
-        if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-            throw new Error('No valid JSON object found in API response');
-        }
-        
-        const jsonString = cleanJson.substring(firstBrace, lastBrace + 1);
-        
-        let result;
-        try {
-            result = JSON.parse(jsonString);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Attempted to parse:', jsonString.substring(0, 200));
-            throw new Error(`Failed to parse API response: ${parseError.message}`);
-        }
-        
-        // Store for testing
+        const result = JSON.parse(responseText.substring(jsonStart, jsonEnd + 1));
         window.mooreMachineData = result;
 
-        if (result.refinedPrompt && result.refinedPrompt !== question) {
-            correctedPrompt.textContent = result.refinedPrompt;
-            promptFeedback.classList.remove('hidden');
-        }
-
-        // Display formal definition
-        const defHTML = `
-            <p class="mb-2"><strong>States (Q):</strong> {${result.states.join(', ')}}</p>
-            <p class="mb-2"><strong>Input Alphabet (Σ):</strong> {${result.alphabet.join(', ')}}</p>
-            <p class="mb-2"><strong>Output Alphabet (Δ):</strong> {${result.outputs.join(', ')}}</p>
-            <p class="mb-2"><strong>Start State (q₀):</strong> ${result.startState}</p>
+        // Display
+        document.getElementById('moore-formal-definition').innerHTML = `
+            <p class="mb-2"><strong>States:</strong> {${result.states.join(', ')}}</p>
+            <p class="mb-2"><strong>Input Alphabet:</strong> {${result.alphabet.join(', ')}}</p>
+            <p class="mb-2"><strong>Output Alphabet:</strong> {${result.outputs.join(', ')}}</p>
+            <p class="mb-2"><strong>Start State:</strong> ${result.startState}</p>
         `;
-        document.getElementById('moore-formal-definition').innerHTML = defHTML;
 
-        // Transition & Output Table
+        // Table
         let table = '<table class="transition-table"><thead><tr><th>State</th>';
-        result.alphabet.forEach(symbol => {
-            table += `<th>δ(${symbol})</th>`;
-        });
-        table += '<th>Output (λ)</th></tr></thead><tbody>';
-        
+        result.alphabet.forEach(s => table += `<th>δ(${s})</th>`);
+        table += '<th>Output λ</th></tr></thead><tbody>';
         result.states.forEach(state => {
-            table += `<tr><td class="font-bold">${state}</td>`;
-            result.alphabet.forEach(symbol => {
-                const nextState = result.transitions[state]?.[symbol] || '-';
-                table += `<td>${nextState}</td>`;
+            table += `<tr><td>${state}</td>`;
+            result.alphabet.forEach(s => {
+                table += `<td>${result.transitions[state]?.[s] || '-'}</td>`;
             });
-            table += `<td class="font-bold text-teal-600 dark:text-teal-400">${result.outputFunction[state]}</td></tr>`;
+            table += `<td class="font-bold text-teal-600">${result.outputFunction[state]}</td></tr>`;
         });
         table += '</tbody></table>';
         document.getElementById('moore-transition-table').innerHTML = table;
 
-        formalDefinitionCard.classList.remove('hidden');
-
-        // Render visualization
-        const vizContainer = document.getElementById('moore-network');
-        const vizPlaceholder = document.getElementById('moore-visualization-placeholder');
+        // Diagram
+        const mooreNetwork = document.getElementById('moore-network');
+        const moorePlaceholder = document.getElementById('moore-visualization-placeholder');
+        if (mooreNetwork) mooreNetwork.innerHTML = createMooreDiagram(result);
+        if (moorePlaceholder) moorePlaceholder.classList.add('hidden');
         
-        // Clear previous visualization
-        vizContainer.innerHTML = '';
-        vizPlaceholder.classList.add('hidden');
-        
-        if (result.diagram) {
-            vizContainer.innerHTML = `<pre class="mermaid">${result.diagram}</pre>`;
-        } else {
-            // Fallback: Generate text-based diagram
-            vizContainer.innerHTML = generateMooreDiagramHTML(result);
-        }
-
-        // Render Mermaid diagrams
-        if (typeof mermaid !== 'undefined' && result.diagram) {
-            try {
-                await mermaid.run({
-                    querySelector: '.mermaid'
-                });
-            } catch (e) {
-                console.log('Mermaid rendering:', e);
-            }
-        }
+        if (formalDefinitionCard) formalDefinitionCard.classList.remove('hidden');
 
     } catch (error) {
-        clearInterval(window.mooreTimer);
-        window.mooreTimer = null;
-        loadingIndicator.classList.add('hidden');
-        solveButton.disabled = false;
-        displayError({ errorText, errorMessageDiv }, error.message);
+        console.error('Moore Error:', error);
+        if (errorText) errorText.textContent = error.message;
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+    } finally {
+        // Stop tool-specific timer
+        if (toolTimers.moore.interval) {
+            clearInterval(toolTimers.moore.interval);
+            toolTimers.moore.interval = null;
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (solveButton) solveButton.disabled = false;
     }
 }
 
+// Mealy Machine - FRESH IMPLEMENTATION
 async function solveMealy() {
     const questionInput = document.getElementById('mealy-question');
     const loadingIndicator = document.getElementById('mealy-loading-indicator');
-    const timerText = document.getElementById('mealy-timer-text');
     const timeElapsed = document.getElementById('mealy-time-elapsed');
     const solveButton = document.getElementById('solve-mealy-button');
-    const promptFeedback = document.getElementById('mealy-prompt-feedback');
-    const correctedPrompt = document.getElementById('mealy-corrected-prompt');
     const formalDefinitionCard = document.getElementById('mealy-formal-definition-card');
     const errorMessageDiv = document.getElementById('mealy-error-message');
     const errorText = document.getElementById('mealy-error-text');
 
-    const question = questionInput.value.trim();
-    if (!question) {
-        displayError({ errorText, errorMessageDiv }, 'Please enter a Mealy machine description.');
+    if (!questionInput) {
+        console.error('Mealy question input element not found');
         return;
     }
 
-    formalDefinitionCard.classList.add('hidden');
-    errorMessageDiv.classList.add('hidden');
-    promptFeedback.classList.add('hidden');
-    document.getElementById('mealy-test-output').classList.add('hidden');
-    
-    loadingIndicator.classList.remove('hidden');
-    solveButton.disabled = true;
-
-    // Clear any existing timer and start new one
-    if (window.mealyTimer) {
-        clearInterval(window.mealyTimer);
-        window.mealyTimer = null;
+    const question = questionInput.value.trim();
+    if (!question) {
+        if (errorText) errorText.textContent = 'Please enter a Mealy machine description.';
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+        return;
     }
-    
-    const startTime = performance.now();
-    window.mealyTimer = setInterval(() => {
-        const elapsed = (performance.now() - startTime) / 1000;
-        timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+
+    // Reset UI
+    if (formalDefinitionCard) formalDefinitionCard.classList.add('hidden');
+    if (errorMessageDiv) errorMessageDiv.classList.add('hidden');
+    const testOutput = document.getElementById('mealy-test-output');
+    if (testOutput) testOutput.classList.add('hidden');
+    if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+    if (solveButton) solveButton.disabled = true;
+
+    // Timer
+    if (toolTimers.mealy.interval) clearInterval(toolTimers.mealy.interval);
+    toolTimers.mealy.startTime = performance.now();
+    toolTimers.mealy.interval = setInterval(() => {
+        if (timeElapsed) {
+            const elapsed = (performance.now() - toolTimers.mealy.startTime) / 1000;
+            timeElapsed.textContent = `${elapsed.toFixed(2)}s`;
+        }
     }, 100);
 
     try {
-        const prompt = `You are an expert in automata theory. Design a Mealy machine based on this description:
+        const prompt = `Design a Mealy machine for: ${question}
 
-${question}
+In Mealy machines, outputs are on transitions (not states).
 
-In a Mealy machine, outputs are associated with transitions (not states).
-
-Provide your response as valid JSON including a Mermaid state diagram:
+Provide ONLY a JSON response (no markdown) in this format:
 {
-    "states": ["q0", "q1", "q2"],
-    "alphabet": ["a", "b"],
-    "outputs": ["X", "Y"],
-    "transitions": {"q0": {"a": {"state": "q1", "output": "X"}, "b": {"state": "q0", "output": "Y"}}, ...},
-    "startState": "q0",
-    "diagram": "stateDiagram-v2\\n    [*] --> q0\\n    q0 --> q1: a/X\\n    q0 --> q0: b/Y\\n    ...",
-    "refinedPrompt": "Clearer version if needed"
+  "states": ["q0", "q1"],
+  "alphabet": ["a", "b"],
+  "outputs": ["0", "1"],
+  "transitions": {"q0": {"a": {"state": "q1", "output": "1"}, "b": {"state": "q0", "output": "0"}}},
+  "startState": "q0"
 }`;
 
         const response = await fetch(API_URL_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
         if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
         const data = await response.json();
         
-        clearInterval(window.mealyTimer);
-        window.mealyTimer = null;
-        loadingIndicator.classList.add('hidden');
-        solveButton.disabled = false;
+        // Stop timer on successful response
+        if (toolTimers.mealy.interval) {
+            clearInterval(toolTimers.mealy.interval);
+            toolTimers.mealy.interval = null;
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (solveButton) solveButton.disabled = false;
 
-        const responseText = data.candidates[0].content.parts[0].text;
+        // Parse JSON
+        let responseText = data.candidates[0].content.parts[0].text;
+        console.log('Mealy Response:', responseText);
+        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        // Enhanced JSON extraction with better cleaning
-        let cleanJson = responseText.trim();
+        const jsonStart = responseText.indexOf('{');
+        const jsonEnd = responseText.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found');
         
-        // Remove markdown code blocks (```json, ```, etc.)
-        cleanJson = cleanJson.replace(/```json\s*/g, '');
-        cleanJson = cleanJson.replace(/```javascript\s*/g, '');
-        cleanJson = cleanJson.replace(/```\s*/g, '');
-        cleanJson = cleanJson.trim();
-        
-        // Extract JSON object - find first { to last }
-        const firstBrace = cleanJson.indexOf('{');
-        const lastBrace = cleanJson.lastIndexOf('}');
-        
-        if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-            throw new Error('No valid JSON object found in API response');
-        }
-        
-        const jsonString = cleanJson.substring(firstBrace, lastBrace + 1);
-        
-        let result;
-        try {
-            result = JSON.parse(jsonString);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Attempted to parse:', jsonString.substring(0, 200));
-            throw new Error(`Failed to parse API response: ${parseError.message}`);
-        }
-        
-        // Store for testing
+        const result = JSON.parse(responseText.substring(jsonStart, jsonEnd + 1));
         window.mealyMachineData = result;
 
-        if (result.refinedPrompt && result.refinedPrompt !== question) {
-            correctedPrompt.textContent = result.refinedPrompt;
-            promptFeedback.classList.remove('hidden');
-        }
-
-        const defHTML = `
-            <p class="mb-2"><strong>States (Q):</strong> {${result.states.join(', ')}}</p>
-            <p class="mb-2"><strong>Input Alphabet (Σ):</strong> {${result.alphabet.join(', ')}}</p>
-            <p class="mb-2"><strong>Output Alphabet (Δ):</strong> {${result.outputs.join(', ')}}</p>
-            <p class="mb-2"><strong>Start State (q₀):</strong> ${result.startState}</p>
+        // Display
+        document.getElementById('mealy-formal-definition').innerHTML = `
+            <p class="mb-2"><strong>States:</strong> {${result.states.join(', ')}}</p>
+            <p class="mb-2"><strong>Input Alphabet:</strong> {${result.alphabet.join(', ')}}</p>
+            <p class="mb-2"><strong>Output Alphabet:</strong> {${result.outputs.join(', ')}}</p>
+            <p class="mb-2"><strong>Start State:</strong> ${result.startState}</p>
         `;
-        document.getElementById('mealy-formal-definition').innerHTML = defHTML;
 
-        // Transition & Output Table
+        // Table
         let table = '<table class="transition-table"><thead><tr><th>State</th>';
-        result.alphabet.forEach(symbol => {
-            table += `<th>δ(${symbol}) / λ(${symbol})</th>`;
-        });
+        result.alphabet.forEach(s => table += `<th>δ(${s}) / λ(${s})</th>`);
         table += '</tr></thead><tbody>';
-        
         result.states.forEach(state => {
-            table += `<tr><td class="font-bold">${state}</td>`;
-            result.alphabet.forEach(symbol => {
-                const trans = result.transitions[state]?.[symbol];
+            table += `<tr><td>${state}</td>`;
+            result.alphabet.forEach(s => {
+                const trans = result.transitions[state]?.[s];
                 if (trans) {
-                    table += `<td>${trans.state} / <span class="font-bold text-orange-600 dark:text-orange-400">${trans.output}</span></td>`;
+                    table += `<td>${trans.state} / <span class="text-orange-600 font-bold">${trans.output}</span></td>`;
                 } else {
                     table += `<td>-</td>`;
                 }
@@ -3207,127 +3238,110 @@ Provide your response as valid JSON including a Mermaid state diagram:
         table += '</tbody></table>';
         document.getElementById('mealy-transition-table').innerHTML = table;
 
-        formalDefinitionCard.classList.remove('hidden');
-
-        // Render visualization
-        const vizContainer = document.getElementById('mealy-network');
-        const vizPlaceholder = document.getElementById('mealy-visualization-placeholder');
+        // Diagram
+        const mealyNetwork = document.getElementById('mealy-network');
+        const mealyPlaceholder = document.getElementById('mealy-visualization-placeholder');
+        if (mealyNetwork) mealyNetwork.innerHTML = createMealyDiagram(result);
+        if (mealyPlaceholder) mealyPlaceholder.classList.add('hidden');
         
-        // Clear previous visualization
-        vizContainer.innerHTML = '';
-        vizPlaceholder.classList.add('hidden');
-        
-        if (result.diagram) {
-            vizContainer.innerHTML = `<pre class="mermaid">${result.diagram}</pre>`;
-        } else {
-            // Fallback: Generate text-based diagram
-            vizContainer.innerHTML = generateMealyDiagramHTML(result);
-        }
-
-        // Render Mermaid diagrams
-        if (typeof mermaid !== 'undefined' && result.diagram) {
-            try {
-                await mermaid.run({
-                    querySelector: '.mermaid'
-                });
-            } catch (e) {
-                console.log('Mermaid rendering:', e);
-            }
-        }
+        if (formalDefinitionCard) formalDefinitionCard.classList.remove('hidden');
 
     } catch (error) {
-        clearInterval(window.mealyTimer);
-        window.mealyTimer = null;
-        loadingIndicator.classList.add('hidden');
-        solveButton.disabled = false;
-        displayError({ errorText, errorMessageDiv }, error.message);
+        console.error('Mealy Error:', error);
+        if (errorText) errorText.textContent = error.message;
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+    } finally {
+        // Stop tool-specific timer
+        if (toolTimers.mealy.interval) {
+            clearInterval(toolTimers.mealy.interval);
+            toolTimers.mealy.interval = null;
+        }
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (solveButton) solveButton.disabled = false;
     }
 }
 
-// Helper functions for generating fallback diagrams
-function generateStateDiagramHTML(automaton, type) {
-    let html = '<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm font-mono">';
-    html += `<div class="text-center mb-4 font-bold text-lg">${type} State Diagram</div>`;
-    html += '<div class="space-y-2">';
+// Helper: Create simple text-based diagrams
+function createSimpleDiagram(machine, type) {
+    let html = '<div class="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-gray-300 dark:border-gray-600">';
+    html += `<div class="text-center font-bold text-xl mb-6 text-blue-600 dark:text-blue-400">${type} State Diagram</div>`;
+    html += '<div class="space-y-4 font-mono text-sm">';
     
-    // Show states with their properties
-    automaton.states.forEach(state => {
-        const isStart = state === automaton.startState;
-        const isAccept = automaton.acceptStates.includes(state);
+    machine.states.forEach(state => {
+        const isStart = state === machine.startState;
+        const isAccept = machine.acceptStates?.includes(state);
         let stateLabel = state;
-        if (isStart && isAccept) stateLabel = `→((${state}))`;
-        else if (isStart) stateLabel = `→(${state})`;
-        else if (isAccept) stateLabel = `((${state}))`;
-        else stateLabel = `(${state})`;
+        if (isStart) stateLabel = '→ ' + stateLabel;
+        if (isAccept) stateLabel = '((' + stateLabel + '))';
         
-        html += `<div class="font-bold text-blue-600 dark:text-blue-400">${stateLabel}</div>`;
+        html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 ${isAccept ? 'border-green-500' : 'border-blue-500'}">`;
+        html += `<div class="font-bold text-lg mb-2">${stateLabel}</div>`;
         
-        // Show transitions from this state
-        const transitions = automaton.transitions[state];
-        if (transitions) {
-            for (const [symbol, target] of Object.entries(transitions)) {
-                const targets = Array.isArray(target) ? target.join(', ') : target;
-                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}--> ${targets}</div>`;
-            }
+        // Show transitions
+        const trans = machine.transitions[state];
+        if (trans) {
+            Object.entries(trans).forEach(([symbol, next]) => {
+                const nextStates = Array.isArray(next) ? next.join(', ') : next;
+                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}→ ${nextStates}</div>`;
+            });
         }
+        html += '</div>';
     });
     
     html += '</div></div>';
     return html;
 }
 
-function generateMooreDiagramHTML(machine) {
-    let html = '<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm font-mono">';
-    html += '<div class="text-center mb-4 font-bold text-lg">Moore Machine State Diagram</div>';
-    html += '<div class="space-y-2">';
+function createMooreDiagram(machine) {
+    let html = '<div class="p-6 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900 dark:to-teal-800 rounded-lg border-2 border-teal-300 dark:border-teal-600">';
+    html += '<div class="text-center font-bold text-xl mb-6 text-teal-600 dark:text-teal-300">Moore Machine State Diagram</div>';
+    html += '<div class="space-y-4 font-mono text-sm">';
     
     machine.states.forEach(state => {
         const isStart = state === machine.startState;
         const output = machine.outputFunction[state];
-        let stateLabel = `(${state})`;
-        if (isStart) stateLabel = `→${stateLabel}`;
         
-        html += `<div class="font-bold text-teal-600 dark:text-teal-400">${stateLabel} / Output: ${output}</div>`;
+        html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 border-teal-500">`;
+        html += `<div class="font-bold text-lg">${isStart ? '→ ' : ''}(${state}) / Output: <span class="text-teal-600 dark:text-teal-400">${output}</span></div>`;
         
-        // Show transitions
-        const transitions = machine.transitions[state];
-        if (transitions) {
-            for (const [symbol, target] of Object.entries(transitions)) {
-                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}--> ${target}</div>`;
-            }
+        const trans = machine.transitions[state];
+        if (trans) {
+            Object.entries(trans).forEach(([symbol, next]) => {
+                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}→ ${next}</div>`;
+            });
         }
+        html += '</div>';
     });
     
     html += '</div></div>';
     return html;
 }
 
-function generateMealyDiagramHTML(machine) {
-    let html = '<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm font-mono">';
-    html += '<div class="text-center mb-4 font-bold text-lg">Mealy Machine State Diagram</div>';
-    html += '<div class="space-y-2">';
+function createMealyDiagram(machine) {
+    let html = '<div class="p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900 dark:to-orange-800 rounded-lg border-2 border-orange-300 dark:border-orange-600">';
+    html += '<div class="text-center font-bold text-xl mb-6 text-orange-600 dark:text-orange-300">Mealy Machine State Diagram</div>';
+    html += '<div class="space-y-4 font-mono text-sm">';
     
     machine.states.forEach(state => {
         const isStart = state === machine.startState;
-        let stateLabel = `(${state})`;
-        if (isStart) stateLabel = `→${stateLabel}`;
         
-        html += `<div class="font-bold text-orange-600 dark:text-orange-400">${stateLabel}</div>`;
+        html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 border-orange-500">`;
+        html += `<div class="font-bold text-lg">${isStart ? '→ ' : ''}(${state})</div>`;
         
-        // Show transitions with outputs
-        const transitions = machine.transitions[state];
-        if (transitions) {
-            for (const [symbol, trans] of Object.entries(transitions)) {
-                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}/${trans.output}--> ${trans.state}</div>`;
-            }
+        const trans = machine.transitions[state];
+        if (trans) {
+            Object.entries(trans).forEach(([symbol, t]) => {
+                html += `<div class="ml-4 text-gray-700 dark:text-gray-300">--${symbol}/<span class="text-orange-600 dark:text-orange-400 font-bold">${t.output}</span>→ ${t.state}</div>`;
+            });
         }
+        html += '</div>';
     });
     
     html += '</div></div>';
     return html;
 }
 
-// Test functions for Moore and Mealy machines
+// Test functions
 function testMooreString() {
     const testString = document.getElementById('moore-test-string').value;
     const outputDiv = document.getElementById('moore-test-output');
@@ -3341,7 +3355,7 @@ function testMooreString() {
     
     const machine = window.mooreMachineData;
     let currentState = machine.startState;
-    let outputs = [machine.outputFunction[currentState]]; // Initial output
+    let outputs = [machine.outputFunction[currentState]];
     
     for (const symbol of testString) {
         if (!machine.alphabet.includes(symbol)) {
@@ -3349,12 +3363,13 @@ function testMooreString() {
             outputDiv.classList.remove('hidden');
             return;
         }
-        currentState = machine.transitions[currentState]?.[symbol];
-        if (!currentState) {
-            resultDiv.textContent = `Error: No transition defined!`;
+        const nextState = machine.transitions[currentState]?.[symbol];
+        if (!nextState) {
+            resultDiv.textContent = `Error: No transition from ${currentState} on ${symbol}`;
             outputDiv.classList.remove('hidden');
             return;
         }
+        currentState = nextState;
         outputs.push(machine.outputFunction[currentState]);
     }
     
@@ -3385,7 +3400,7 @@ function testMealyString() {
         }
         const trans = machine.transitions[currentState]?.[symbol];
         if (!trans) {
-            resultDiv.textContent = `Error: No transition defined!`;
+            resultDiv.textContent = `Error: No transition from ${currentState} on ${symbol}`;
             outputDiv.classList.remove('hidden');
             return;
         }
