@@ -1864,10 +1864,6 @@ body.dark .visualization-placeholder-box p {
     animation: spin 1.2s linear infinite reverse;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 /* Spinner - Dark Mode */
 body.dark .spinner {
     border: 4px solid rgba(59, 130, 246, 0.2);

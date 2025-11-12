@@ -1,0 +1,40 @@
+# Editor and IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies (if added later)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs (if minified versions are created)
+*.min.css
+*.min.js
+*.min.html
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment variables
+.env
+.env.local
+
+# API keys (backup - already in code but good practice)
+config.js
+secrets.js
