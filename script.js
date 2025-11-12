@@ -1,6 +1,6 @@
 // Global API Configuration
 // NOTE: The API key is included here for testing purposes in this environment.
-const apiKey = "AIzaSyBfzFLbttDPSi-p8x_sNwJzwy1OQOgmJgU";
+const apiKey = "AIzaSyCBUrMKosIqa_Zg8-6X6jDPp3IV4ABIRQc";
 const API_URL_BASE = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
 // Store DFA/NFA data globally after solution
