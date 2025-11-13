@@ -667,6 +667,7 @@
                 <div id="re-formal-definition-card" class="hidden shadow-2xl formal-definition-box bg-card border-yellow-600">
                     <h2 class="text-2xl font-extrabold text-yellow-700 dark:text-yellow-400 mb-4" data-i18n="re.result">Resulting Regular Expression ($\mathbf{r}$)</h2>
                     <div id="re-formal-definition" class="text-4xl font-mono text-gray-800 dark:text-gray-200 mb-4 p-4 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 overflow-x-auto text-content"></div>
+
                 </div>
 
                 <div class="bg-card p-6 rounded-2xl shadow-xl border-yellow-100 dark:border-yellow-900">
@@ -725,6 +726,7 @@
                     
                     <h3 class="text-xl font-bold text-red-800 dark:text-red-400 mb-3" data-i18n="cfg.production">Production Rules ($\mathbf{P}$)</h3>
                     <div id="cfg-transition-table" class="bg-gray-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-300 dark:border-gray-700 text-lg font-mono whitespace-pre-wrap overflow-x-auto text-gray-800 dark:text-gray-200"></div>
+
                 </div>
 
                 <div class="bg-card p-6 rounded-2xl shadow-xl border-red-100 dark:border-red-900">
@@ -1170,6 +1172,34 @@
 
 
     </div>
+    <!-- Reusable Code/Content Modal -->
+    <div id="code-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative mx-auto my-10 w-[95%] max-w-3xl">
+            <div class="modal-content bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Generated Content</h2>
+                    <button aria-label="Close" onclick="closeModal()" class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">✖</button>
+                </div>
+
+                <!-- Loading indicator (toggled by JS) -->
+                <div id="code-loading-indicator" class="flex items-center gap-3 py-3">
+                    <div class="spinner bg-blue-600"></div>
+                    <span class="text-gray-700 dark:text-gray-300">Generating, please wait…</span>
+                </div>
+
+                <!-- Error area (toggled by JS) -->
+                <div id="code-error-message" class="hidden bg-red-100 dark:bg-red-900 border-l-4 border-red-500 p-4 rounded-xl shadow-md mb-4">
+                    <p class="font-bold text-red-800 dark:text-red-300">Error:</p>
+                    <p id="code-error-text" class="text-red-700 dark:text-red-200"></p>
+                </div>
+
+                <!-- Dynamic content goes here -->
+                <div id="code-modal-content" class="prose dark:prose-invert max-w-none"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Link to external JavaScript -->
     <script src="script.js"></script>
 </body>

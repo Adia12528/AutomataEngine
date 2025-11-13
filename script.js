@@ -2130,43 +2130,162 @@ async function callGeminiApi(prompt, type, maxRetries = 3, isCodeGeneration = fa
 
 // --- NEW FEATURE: Code Generation Logic ---
 
+// Helper: Toggle generator buttons enabled/disabled for a tool prefix
+function setGeneratorButtonsEnabled(prefix, enabled) {
+    const ids = [
+        `generate-${prefix}-code-button`,
+        `generate-${prefix}-language-button`,
+        `generate-${prefix}-test-cases-button`,
+    ];
+    ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.disabled = !enabled;
+        if (!enabled) {
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
+
+// Disable all generator buttons on initial load
+function disableAllGeneratorButtons() {
+    const prefixes = ['dfa','nfa','dfamin','re','cfg','pda','lba','tm','nfatodfa','moore','mealy'];
+    prefixes.forEach(p => setGeneratorButtonsEnabled(p, false));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    disableAllGeneratorButtons();
+});
+
+// Helper: Collect minimal data directly from the DOM if global data is missing
+function collectToolDataFromDom(originalType) {
+    try {
+        const result = {};
+        // Formal definition block
+        const fdEl = document.getElementById(`${originalType}-formal-definition`);
+        if (fdEl) {
+            // Prefer text if it's plain, else HTML
+            const text = fdEl.textContent && fdEl.textContent.trim();
+            result.formalDefinition = text && text.length > 0 ? text : fdEl.innerHTML || '';
+        }
+
+        // Special case: RE shows the regex in the formal definition container
+        if (originalType === 're' && result.formalDefinition) {
+            result.regex = result.regexp = result.formalDefinition;
+        }
+
+        // Transition/Rules container varies by tool
+        let transitionsText = '';
+        let tableEl = document.getElementById(`${originalType}-transition-table`);
+        if (!tableEl && originalType === 'nfatodfa') {
+            // Converted DFA table id
+            tableEl = document.getElementById('nfatodfa-dfa-table');
+            const converted = document.getElementById('nfatodfa-converted-dfa');
+            if (converted && !result.formalDefinition) {
+                result.formalDefinition = (converted.textContent || converted.innerHTML || '').trim();
+            }
+        }
+        if (tableEl) transitionsText = (tableEl.textContent || tableEl.innerText || '').trim();
+
+        if (transitionsText) {
+            // Keep as string for PDA/TM rendering compatibility; also provide a parsed-like field
+            result.transitions = transitionsText;
+        }
+
+        // Attempt to extract productions for CFG/LBA if present within transition block
+        if ((originalType === 'cfg' || originalType === 'lba') && transitionsText) {
+            result.productionRules = transitionsText;
+        }
+
+        // States/Start/Final may not be in DOM easily; leave undefined
+        return Object.keys(result).length ? result : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 async function generatePythonCode(type) {
     const elements = getElements(type);
-    
-    // For DFAMin, use the data from the minimized structure
-    const dataKey = (type === 'dfamin' ? 'dfa' : type);
-    const data = currentAutomatonData[dataKey];
 
-    if (!data || !data.states || data.states.length === 0) {
-        openModal('Code Generation Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate the corresponding Python code.</p>');
+    const normalized = (type === 'dfamin' ? 'dfa' : type);
+    let data = currentAutomatonData[normalized];
+    if (!data) {
+        // Fallback to DOM-extracted data using the original type ids
+        data = collectToolDataFromDom(type) || null;
+    }
+
+    // Type-aware availability check: allow codegen with transitions, productions, regex or formalDefinition
+    const hasStates = data && Array.isArray(data.states) && data.states.length > 0;
+    const hasTransitions = data && data.transitions;
+    const hasProductions = data && (data.productions || data.grammar);
+    const hasRegex = data && (data.regexp || data.regex);
+    const hasFormal = data && data.formalDefinition;
+
+    if (!data || !(hasStates || hasTransitions || hasProductions || hasRegex || hasFormal)) {
+        openModal('Code Generation Error', '<p class="text-red-600 dark:text-red-400">Please solve this tool first so I have a structure to generate Python for.</p>');
         return;
     }
 
     openModal('Python Simulation Code', '');
     document.getElementById('code-loading-indicator').classList.remove('hidden');
-    
+
     // Start tool-specific timer
     startToolTimer('pythonCode');
 
     try {
-        // Use request manager to allow concurrent execution
         const requestKey = `codegen-${type}-${Date.now()}`;
-        
+
         await requestManager.executeWithLimit(requestKey, async () => {
-            // Prepare the prompt for the LLM
+            // Prepare type-specific prompt
             const machineType = (type === 'dfamin' ? 'Minimized DFA' : type.toUpperCase());
 
-            const codePrompt = `Generate a Python class/script for this ${machineType} using the following parameters: 
-            States: ${data.states.join(', ')}
-            Start State: ${data.startState}
-            Final States: ${data.finalStates.join(', ')}
-            Transitions (from, to, symbol): ${JSON.stringify(data.transitions)}
-            The code should include a simulation function and a test example.`;
-            
-            const apiType = (type === 'dfamin' ? 'dfa' : type);
+            let codePrompt;
+            switch (normalized) {
+                case 're': {
+                    const reStr = data.regexp || data.regex || data.formalDefinition || '';
+                    codePrompt = `Generate a Python script that checks string membership for the following Regular Expression and includes a few tests. Use only the standard library (e.g., re).\nRegular Expression: ${reStr}`;
+                    break;
+                }
+                case 'cfg': {
+                    const prods = JSON.stringify(data.productions || data.grammar || {});
+                    codePrompt = `Generate Python code that represents this CFG and provides a membership check (e.g., CYK if near-CNF or a simple recursive descent if suitable). Avoid external libraries. Include a small test harness.\nProductions: ${prods}`;
+                    break;
+                }
+                case 'pda': {
+                    codePrompt = `Generate a Python PDA simulator class with a method accept(input_str) returning True/False. Use the following as context. Prefer acceptance by final state if ambiguous.\nFormal Definition: ${data.formalDefinition || ''}\nTransitions: ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'tm': {
+                    codePrompt = `Generate a simple single-tape Turing Machine simulator in Python with run(input_str) returning accept/reject. Use the transition relation below. Keep it clear and self-contained with tests.\nFormal Definition: ${data.formalDefinition || ''}\nTransitions: ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'lba': {
+                    codePrompt = `Generate Python code for a linear-bounded automaton-like simulator (or bounded TM) that decides/recognizes the described language. Keep it simple and documented with a few tests.\nFormal Definition: ${data.formalDefinition || ''}\nRules/Transitions: ${JSON.stringify(data.transitions || data.productions || data.grammar || {})}`;
+                    break;
+                }
+                case 'moore': {
+                    codePrompt = `Generate a Python Moore machine simulator. Implement output per state and a run(inputs) that returns the output sequence. Include a small example.\nStates: ${(data.states||[]).join(', ')}\nStart: ${data.startState || ''}\nFinal: ${Array.isArray(data.finalStates)?data.finalStates.join(', '): (data.finalStates||'')}\nOutputFunction: ${JSON.stringify(data.outputFunction || {})}\nTransitions: ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'mealy': {
+                    codePrompt = `Generate a Python Mealy machine simulator where output depends on (state,input). Provide run(inputs) -> outputs and a test.\nStates: ${(data.states||[]).join(', ')}\nStart: ${data.startState || ''}\nFinal: ${Array.isArray(data.finalStates)?data.finalStates.join(', '): (data.finalStates||'')}\nTransitions (with outputs): ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'nfatodfa':
+                case 'dfa':
+                case 'nfa':
+                default: {
+                    // Default DFA/NFA-like prompt, robust to missing fields
+                    codePrompt = `Generate a Python ${machineType} simulator with accept(input_str) using this context. Prefer clear data structures and include a test.\nStates: ${(data.states||[]).join(', ')}\nStart State: ${data.startState || ''}\nFinal States: ${Array.isArray(data.finalStates)?data.finalStates.join(', '): (data.finalStates||'')}\nTransitions: ${JSON.stringify(data.transitions || {})}\nFormal Definition: ${data.formalDefinition || ''}`;
+                    break;
+                }
+            }
+
+            const apiType = normalized;
             const pythonCode = await callGeminiApi(codePrompt, apiType, 3, true);
 
-            // Display the generated code
             const codeHtml = `
                 <pre class="whitespace-pre-wrap bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-green-400 p-4 rounded-lg text-sm overflow-x-auto mb-4 border border-gray-300 dark:border-gray-700">${pythonCode}</pre>
                 <button id="copy-code-button" 
@@ -2177,14 +2296,14 @@ async function generatePythonCode(type) {
                 </button>
                 <div data-timer="pythonCode" class="text-sm text-gray-600 dark:text-gray-400 mt-2"></div>
             `;
-            
+
             document.getElementById('code-modal-content').innerHTML = codeHtml;
             document.getElementById('code-loading-indicator').classList.add('hidden');
             stopToolTimer('pythonCode');
         });
 
     } catch (error) {
-        console.error("Code generation failed:", error);
+        console.error('Code generation failed:', error);
         displayCodeError(`Code generation failed. Details: ${error.message}`);
         stopToolTimer('pythonCode');
     }
@@ -2193,33 +2312,96 @@ async function generatePythonCode(type) {
 // --- NEW FEATURE: Formal Language Generator ---
 
 async function generateFormalLanguage(type) {
-    const data = currentAutomatonData[(type === 'dfamin' ? 'dfa' : type)];
-    
-    if (!data || !data.states || data.states.length === 0) {
-        openModal('Formal Language Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate the formal language definition.</p>');
+    const normalized = (type === 'dfamin') ? 'dfa' : type;
+    let data = currentAutomatonData[normalized];
+    if (!data) {
+        data = collectToolDataFromDom(type) || null;
+    }
+
+    // Type-aware availability check: permit without states if other structures exist
+    const hasStates = data && Array.isArray(data.states) && data.states.length > 0;
+    const hasTransitions = data && data.transitions;
+    const hasProductions = data && (data.productions || data.grammar);
+    const hasRegex = data && (data.regexp || data.regex);
+    const hasFormal = data && data.formalDefinition;
+
+    if (!data || !(hasStates || hasTransitions || hasProductions || hasRegex || hasFormal)) {
+        openModal('Formal Language Error', '<p class="text-red-600 dark:text-red-400">Please solve this tool first so I have a definition to explain the language/behavior.</p>');
         return;
     }
 
-    openModal('Formal Language Definition', '');
+    // Open modal and show loader
+    openModal('Generating...', '');
     document.getElementById('code-loading-indicator').classList.remove('hidden');
-    
+
     // Start tool-specific timer
     startToolTimer('formalLanguage');
 
     try {
-        const requestKey = `formlang-${type}-${Date.now()}`;
-        
-        await requestManager.executeWithLimit(requestKey, async () => {
-            const prompt = `Automaton type: ${type.toUpperCase()}. Formal Definition: ${data.formalDefinition}. Transitions: ${JSON.stringify(data.transitions)}.`;
-            const languageDefinition = await callGeminiApi(prompt, type, 3, false, false, true, false);
+        const requestKey = `formlang-${normalized}-${Date.now()}`;
 
-            const title = type === 'dfamin' ? 'Formal Language $L(M\')$' : 'Formal Language $L(M)$';
+        await requestManager.executeWithLimit(requestKey, async () => {
+            // Build a clearer, tool-specific prompt
+            const transitionsJson = JSON.stringify(data.transitions);
+            const baseContext = `AutomatonType: ${normalized.toUpperCase()}\nStates: ${data.states.join(', ')}\nStartState: ${data.startState}\nFinalStates: ${Array.isArray(data.finalStates) ? data.finalStates.join(', ') : (data.finalStates || '-')}`;
+
+            let title;
+            let prompt;
+
+            switch (normalized) {
+                case 'dfa':
+                case 'nfa':
+                case 'nfatodfa':
+                    title = normalized === 'dfa' ? 'Formal Language L(M)' : (normalized === 'nfa' ? 'Formal Language L(N)' : 'Formal Language L(M) (Converted DFA)');
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Describe the accepted language clearly. Provide:\n1) Short overview (1-2 lines)\n2) Formal set-builder notation for L(M)\n3) 5 accepted examples with brief reasons\n4) 5 rejected examples with brief reasons\n5) Notes (if relevant): determinism, epsilon-moves, and minimal insights.\nKeep it concise and well-formatted in HTML/Markdown.`;
+                    break;
+                case 'dfamin':
+                    // Should not happen due to normalization, but keep safe
+                    title = 'Formal Language L(M\')';
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Same as DFA, but reflect minimization if relevant.`;
+                    break;
+                case 'cfg':
+                    title = 'Language Generated by Grammar G';
+                    prompt = `${baseContext}\nProductions: ${JSON.stringify(data.productions || data.grammar || {})}\n\nTask: Describe the language generated by CFG G. Provide:\n1) Intuitive description of strings in L(G)\n2) If possible, a formal characterization (regex or constraints)\n3) 5 example strings in L(G) with brief derivation hints\n4) 5 example strings not in L(G) with brief reasons\n5) Notes: ambiguity or normal forms if relevant.`;
+                    break;
+                case 'pda':
+                    title = 'Language Accepted by PDA';
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Describe the language accepted by this PDA. Provide:\n1) Intuitive description\n2) Acceptance mode (final state or empty stack if known)\n3) 5 accepted examples with stack intuition\n4) 5 rejected examples with brief reasons\n5) Notes: relation to CFG if relevant.`;
+                    break;
+                case 'tm':
+                    title = 'Language Recognized by Turing Machine';
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Describe the language recognized/decided by the TM. Provide:\n1) Intuitive description\n2) If the machine decides (halts on all inputs), state that; otherwise, note recognition\n3) 3-5 accepted examples with short reasoning\n4) 3-5 rejected examples with short reasoning\n5) Notes: time/space or class, only if apparent.`;
+                    break;
+                case 'lba':
+                    title = 'Language Recognized by LBA';
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Describe the language recognized by the LBA. Provide:\n1) Intuitive description\n2) Structural constraints\n3) 5 accepted and 5 rejected examples with brief reasons\n4) Notes: relation to context-sensitive languages if relevant.`;
+                    break;
+                case 're':
+                    title = 'Language Described by Regular Expression';
+                    prompt = `${baseContext}\nRegularExpression: ${data.regexp || data.regex || data.formalDefinition || ''}\n\nTask: Explain the language denoted by the RE. Provide:\n1) Intuitive description\n2) Equivalent simple constraints if any\n3) 5 example strings in the language and 5 not in the language, with reasons.`;
+                    break;
+                case 'moore':
+                    title = 'Behavioral Specification (Moore)';
+                    prompt = `${baseContext}\nOutputFunction: ${JSON.stringify(data.outputFunction || {})}\nTransitions: ${transitionsJson}\n\nTask: Provide a clear behavioral description, not a formal language. Provide:\n1) What outputs are produced per state\n2) How inputs drive state changes and outputs\n3) 5 short IO traces (input → outputs)\n4) Notes on steady-state/initial outputs.`;
+                    break;
+                case 'mealy':
+                    title = 'Behavioral Specification (Mealy)';
+                    prompt = `${baseContext}\nTransitionsWithOutputs: ${transitionsJson}\n\nTask: Provide a clear behavioral description, not a formal language. Provide:\n1) Output as a function of (state, input)\n2) 5 short IO traces (input → outputs)\n3) Notes: differences vs Moore if relevant.`;
+                    break;
+                default:
+                    title = 'Formal Language / Specification';
+                    prompt = `${baseContext}\nTransitions: ${transitionsJson}\n\nTask: Summarize the accepted language or behavior with examples.`;
+            }
+
+            const languageDefinition = await callGeminiApi(prompt, normalized, 3, false, false, true, false);
+
             const contentHtml = `
-                <p class="text-lg text-gray-700 dark:text-gray-300 mb-4">Set-Builder Notation for the accepted language:</p>
-                <div class="text-2xl font-mono text-gray-900 dark:text-gray-100 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-x-auto">${languageDefinition}</div>
-                <div data-timer="formalLanguage" class="text-sm text-gray-600 dark:text-gray-400 mt-2"></div>
+                <div class="prose dark:prose-invert max-w-none">
+                    ${languageDefinition}
+                </div>
+                <div data-timer="formalLanguage" class="text-sm text-gray-600 dark:text-gray-400 mt-4"></div>
             `;
-            
+
             document.querySelector('#code-modal .modal-content h2').textContent = title;
             document.getElementById('code-modal-content').innerHTML = contentHtml;
             document.getElementById('code-loading-indicator').classList.add('hidden');
@@ -2227,7 +2409,7 @@ async function generateFormalLanguage(type) {
         });
 
     } catch (error) {
-        console.error("Formal Language generation failed:", error);
+        console.error('Formal Language generation failed:', error);
         displayCodeError(`Formal language generation failed. Details: ${error.message}`);
         stopToolTimer('formalLanguage');
     }
@@ -2236,10 +2418,20 @@ async function generateFormalLanguage(type) {
 // --- NEW FEATURE: Test Case Generator ---
 
 async function generateTestCases(type) {
-    const data = currentAutomatonData[(type === 'dfamin' ? 'dfa' : type)];
-    
-    if (!data || !data.states || data.states.length === 0) {
-        openModal('Test Case Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate test cases.</p>');
+    const normalized = (type === 'dfamin' ? 'dfa' : type);
+    let data = currentAutomatonData[normalized];
+    if (!data) {
+        data = collectToolDataFromDom(type) || null;
+    }
+
+    const hasStates = data && Array.isArray(data.states) && data.states.length > 0;
+    const hasTransitions = data && data.transitions;
+    const hasProductions = data && (data.productions || data.grammar);
+    const hasRegex = data && (data.regexp || data.regex);
+    const hasFormal = data && data.formalDefinition;
+
+    if (!data || !(hasStates || hasTransitions || hasProductions || hasRegex || hasFormal)) {
+        openModal('Test Case Error', '<p class="text-red-600 dark:text-red-400">Please solve this tool first so I can generate meaningful test cases.</p>');
         return;
     }
 
@@ -2253,12 +2445,46 @@ async function generateTestCases(type) {
         const requestKey = `testcases-${type}-${Date.now()}`;
         
         await requestManager.executeWithLimit(requestKey, async () => {
-            const prompt = `Automaton type: ${type.toUpperCase()}. Formal Definition: ${data.formalDefinition}. Transitions: ${JSON.stringify(data.transitions)}.`;
-            const testCases = await callGeminiApi(prompt, type, 3, false, false, false, true);
+            // Type-specific prompt for better test cases
+            let prompt;
+            switch (normalized) {
+                case 're': {
+                    const reStr = data.regexp || data.regex || data.formalDefinition || '';
+                    prompt = `Generate a compact table of positive and negative example strings for this Regular Expression. Include rationale for each example.\nRE: ${reStr}`;
+                    break;
+                }
+                case 'cfg': {
+                    const prods = JSON.stringify(data.productions || data.grammar || {});
+                    prompt = `Generate accepted and rejected strings for this CFG with brief derivation hints or reasons. Provide a balanced set of short to moderate-length examples.\nProductions: ${prods}`;
+                    break;
+                }
+                case 'pda':
+                case 'lba':
+                case 'tm': {
+                    prompt = `Generate accepted and rejected input examples for this ${normalized.toUpperCase()} with short reasons tied to the operational intuition.\nFormal Definition: ${data.formalDefinition || ''}\nTransitions/Rules: ${JSON.stringify(data.transitions || data.productions || data.grammar || {})}`;
+                    break;
+                }
+                case 'moore': {
+                    prompt = `Generate short input sequences and the corresponding output sequences for this Moore machine, plus a few mismatched examples with explanations.\nStates: ${(data.states||[]).join(', ')}\nStart: ${data.startState || ''}\nOutputFunction: ${JSON.stringify(data.outputFunction || {})}\nTransitions: ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'mealy': {
+                    prompt = `Generate short input sequences and expected output sequences for this Mealy machine (output depends on state and input). Add a few counterexamples.\nStates: ${(data.states||[]).join(', ')}\nStart: ${data.startState || ''}\nTransitions (with outputs): ${JSON.stringify(data.transitions || {})}`;
+                    break;
+                }
+                case 'nfatodfa':
+                case 'dfa':
+                case 'nfa':
+                default: {
+                    prompt = `Generate acceptance and rejection examples for this automaton with concise reasons. Favor short strings and edge cases.\nFormal Definition: ${data.formalDefinition || ''}\nTransitions: ${JSON.stringify(data.transitions || {})}`;
+                }
+            }
 
-            const title = type === 'dfamin' ? 'Test Cases for $M\'$' : 'Test Cases for $M$';
+            const testCases = await callGeminiApi(prompt, normalized, 3, false, false, false, true);
+
+            const title = (type === 'dfamin') ? 'Test Cases for $M\'$' : 'Test Cases';
             const contentHtml = `
-                <p class="text-lg text-gray-700 dark:text-gray-300 mb-4">Generated strings to test acceptance and rejection:</p>
+                <p class="text-lg text-gray-700 dark:text-gray-300 mb-4">Generated examples to validate behavior:</p>
                 <div class="prose dark:prose-invert max-w-none">
                     ${testCases}
                 </div>
@@ -2753,6 +2979,9 @@ async function solveAutomaton(prefix) {
         // Store data globally for code generation. DFAMin maps its data to the 'dfa' key for code generation
         const dataKey = (prefix === 'dfamin' ? 'dfa' : prefix);
         currentAutomatonData[dataKey] = data;
+
+        // Enable generator buttons for this tool now that data is available
+        setGeneratorButtonsEnabled(prefix, true);
 
         // Update corrected prompt with null check
         if (elements.correctedPromptElement) {
