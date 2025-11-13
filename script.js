@@ -2138,7 +2138,7 @@ async function generatePythonCode(type) {
     const data = currentAutomatonData[dataKey];
 
     if (!data || !data.states || data.states.length === 0) {
-        openModal('Code Generation Error', '<p class="text-red-600">Please solve the Automaton problem first to generate the corresponding Python code.</p>');
+        openModal('Code Generation Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate the corresponding Python code.</p>');
         return;
     }
 
@@ -2168,7 +2168,7 @@ async function generatePythonCode(type) {
 
             // Display the generated code
             const codeHtml = `
-                <pre class="whitespace-pre-wrap bg-gray-800 text-green-400 p-4 rounded-lg text-sm overflow-x-auto mb-4">${pythonCode}</pre>
+                <pre class="whitespace-pre-wrap bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-green-400 p-4 rounded-lg text-sm overflow-x-auto mb-4 border border-gray-300 dark:border-gray-700">${pythonCode}</pre>
                 <button id="copy-code-button" 
                     class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 solver-button"
                     onclick="copyToClipboard(document.querySelector('#code-modal-content pre').textContent)"
@@ -2196,7 +2196,7 @@ async function generateFormalLanguage(type) {
     const data = currentAutomatonData[(type === 'dfamin' ? 'dfa' : type)];
     
     if (!data || !data.states || data.states.length === 0) {
-        openModal('Formal Language Error', '<p class="text-red-600">Please solve the Automaton problem first to generate the formal language definition.</p>');
+        openModal('Formal Language Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate the formal language definition.</p>');
         return;
     }
 
@@ -2239,7 +2239,7 @@ async function generateTestCases(type) {
     const data = currentAutomatonData[(type === 'dfamin' ? 'dfa' : type)];
     
     if (!data || !data.states || data.states.length === 0) {
-        openModal('Test Case Error', '<p class="text-red-600">Please solve the Automaton problem first to generate test cases.</p>');
+        openModal('Test Case Error', '<p class="text-red-600 dark:text-red-400">Please solve the Automaton problem first to generate test cases.</p>');
         return;
     }
 
@@ -3203,7 +3203,7 @@ Provide ONLY a JSON response (no markdown) in this format:
             result.alphabet.forEach(s => {
                 table += `<td>${result.transitions[state]?.[s] || '-'}</td>`;
             });
-            table += `<td class="font-bold text-teal-600">${result.outputFunction[state]}</td></tr>`;
+            table += `<td class="font-bold text-teal-600 dark:text-teal-400">${result.outputFunction[state]}</td></tr>`;
         });
         table += '</tbody></table>';
         document.getElementById('moore-transition-table').innerHTML = table;
@@ -3331,7 +3331,7 @@ Provide ONLY a JSON response (no markdown) in this format:
             result.alphabet.forEach(s => {
                 const trans = result.transitions[state]?.[s];
                 if (trans) {
-                    table += `<td>${trans.state} / <span class="text-orange-600 font-bold">${trans.output}</span></td>`;
+                    table += `<td>${trans.state} / <span class="text-orange-600 dark:text-orange-400 font-bold">${trans.output}</span></td>`;
                 } else {
                     table += `<td>-</td>`;
                 }
@@ -3378,7 +3378,7 @@ function createSimpleDiagram(machine, type) {
         if (isAccept) stateLabel = '((' + stateLabel + '))';
         
         html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 ${isAccept ? 'border-green-500' : 'border-blue-500'}">`;
-        html += `<div class="font-bold text-lg mb-2">${stateLabel}</div>`;
+        html += `<div class="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">${stateLabel}</div>`;
         
         // Show transitions
         const trans = machine.transitions[state];
@@ -3405,7 +3405,7 @@ function createMooreDiagram(machine) {
         const output = machine.outputFunction[state];
         
         html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 border-teal-500">`;
-        html += `<div class="font-bold text-lg">${isStart ? '→ ' : ''}(${state}) / Output: <span class="text-teal-600 dark:text-teal-400">${output}</span></div>`;
+        html += `<div class="font-bold text-lg text-gray-900 dark:text-gray-100">${isStart ? '→ ' : ''}(${state}) / Output: <span class="text-teal-600 dark:text-teal-400">${output}</span></div>`;
         
         const trans = machine.transitions[state];
         if (trans) {
@@ -3429,7 +3429,7 @@ function createMealyDiagram(machine) {
         const isStart = state === machine.startState;
         
         html += `<div class="p-3 bg-white dark:bg-gray-700 rounded border-l-4 border-orange-500">`;
-        html += `<div class="font-bold text-lg">${isStart ? '→ ' : ''}(${state})</div>`;
+        html += `<div class="font-bold text-lg text-gray-900 dark:text-gray-100">${isStart ? '→ ' : ''}(${state})</div>`;
         
         const trans = machine.transitions[state];
         if (trans) {

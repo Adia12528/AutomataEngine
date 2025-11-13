@@ -875,12 +875,47 @@ body:not(.dark) .bg-violet-600, body:not(.dark) .from-violet-500.to-violet-600 {
 }
 body:not(.dark) .hover\:bg-violet-700:hover { filter: brightness(0.95); }
 
+body:not(.dark) .bg-cyan-600, body:not(.dark) .from-cyan-500.to-cyan-600 {
+    background-color: #0891b2 !important;
+    background-image: linear-gradient(45deg, #06b6d4, #0891b2) !important;
+    color: #fff !important;
+}
+body:not(.dark) .hover\:bg-cyan-700:hover { filter: brightness(0.95); }
+
+body:not(.dark) .bg-yellow-600, body:not(.dark) .from-yellow-500.to-yellow-600 {
+    background-color: #ca8a04 !important;
+    background-image: linear-gradient(45deg, #eab308, #ca8a04) !important;
+    color: #fff !important;
+}
+body:not(.dark) .hover\:bg-yellow-700:hover { filter: brightness(0.95); }
+
+body:not(.dark) .bg-red-600, body:not(.dark) .from-red-500.to-red-600 {
+    background-color: #dc2626 !important;
+    background-image: linear-gradient(45deg, #ef4444, #dc2626) !important;
+    color: #fff !important;
+}
+body:not(.dark) .hover\:bg-red-700:hover { filter: brightness(0.95); }
+
 body:not(.dark) .bg-green-600, body:not(.dark) .from-green-500.to-green-600 {
     background-color: var(--light-accent) !important;
     background-image: linear-gradient(45deg, var(--light-accent), #18b089) !important;
     color: #fff !important;
 }
 body:not(.dark) .hover\:bg-green-700:hover { filter: brightness(0.95); }
+
+body:not(.dark) .bg-indigo-600, body:not(.dark) .from-indigo-500.to-indigo-600 {
+    background-color: #4f46e5 !important;
+    background-image: linear-gradient(45deg, #6366f1, #4f46e5) !important;
+    color: #fff !important;
+}
+body:not(.dark) .hover\:bg-indigo-700:hover { filter: brightness(0.95); }
+
+body:not(.dark) .bg-gray-600, body:not(.dark) .from-gray-500.to-gray-600 {
+    background-color: #4b5563 !important;
+    background-image: linear-gradient(45deg, #6b7280, #4b5563) !important;
+    color: #fff !important;
+}
+body:not(.dark) .hover\:bg-gray-700:hover { filter: brightness(0.95); }
 
 body:not(.dark) .bg-purple-600, body:not(.dark) .from-purple-500.to-purple-600 {
     background-color: var(--light-secondary) !important;
@@ -908,13 +943,36 @@ body.dark .bg-blue-600, body.dark .from-blue-500.to-blue-600 {
     background-image: linear-gradient(45deg, var(--dark-primary), var(--dark-secondary)) !important;
     color: var(--dark-bg-primary) !important;
 }
-body.dark .bg-violet-600, body.dark .from-violet-500.to-violet-600,
-body.dark .bg-purple-600, body.dark .from-purple-500.to-purple-600 {
-    background-image: linear-gradient(45deg, var(--dark-secondary), var(--dark-primary)) !important;
+body.dark .bg-violet-600, body.dark .from-violet-500.to-violet-600 {
+    background-image: linear-gradient(45deg, #a78bfa, #8b5cf6) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-cyan-600, body.dark .from-cyan-500.to-cyan-600 {
+    background-image: linear-gradient(45deg, #22d3ee, #06b6d4) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-yellow-600, body.dark .from-yellow-500.to-yellow-600 {
+    background-image: linear-gradient(45deg, #facc15, #eab308) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-red-600, body.dark .from-red-500.to-red-600 {
+    background-image: linear-gradient(45deg, #f87171, #ef4444) !important;
     color: var(--dark-bg-primary) !important;
 }
 body.dark .bg-green-600, body.dark .from-green-500.to-green-600 {
-    background-image: linear-gradient(45deg, var(--dark-accent), #4ade80) !important;
+    background-image: linear-gradient(45deg, #4ade80, #22c55e) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-indigo-600, body.dark .from-indigo-500.to-indigo-600 {
+    background-image: linear-gradient(45deg, #818cf8, #6366f1) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-gray-600, body.dark .from-gray-500.to-gray-600 {
+    background-image: linear-gradient(45deg, #9ca3af, #6b7280) !important;
+    color: var(--dark-bg-primary) !important;
+}
+body.dark .bg-purple-600, body.dark .from-purple-500.to-purple-600 {
+    background-image: linear-gradient(45deg, #c084fc, #a855f7) !important;
     color: var(--dark-bg-primary) !important;
 }
 body.dark .bg-orange-600, body.dark .from-orange-500.to-orange-600 {
